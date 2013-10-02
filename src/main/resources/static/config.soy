@@ -1,0 +1,85 @@
+{namespace stash.config.jenkins.job.integration}
+
+/**
+ * @param repository Repository object
+ * @param jenkinsBaseUrl Jenkins Base Url
+ * @param jenkinsUserName Jenkins username
+ * @param jenkinsPassword Jenkins password
+ * @param buildRefField Build reference field
+ * @param buildTitleField Build Title field
+ * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
+ * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
+ * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
+  
+ */
+{template .repositorySettings}
+<html>
+<head>
+    <meta name="decorator" content="stash.repository.settings">
+    <meta name="projectKey" content="{$repository.project.key}">
+    <meta name="repositorySlug" content="{$repository.slug}">
+    <meta name="activeTab" content="repository-settings-plugin-tab">
+    <title>{$repository.slug} / Jenkins pull request integration settings</title>
+</head>
+<body>
+    <h3>Repository: {$repository.slug}</h3>
+    <p>Welcome Jenkins pull request integration settings</p>
+    
+<form action="#" method="post" id="d" class="aui">
+    <fieldset>
+        <div class="field-group">
+            <label for="triggerBuildOnCreate">Trigger on new pull-request</label>
+            <input class="checkbox" type="checkbox" id="triggerBuildOnCreate" name="triggerBuildOnCreate" title="triggerBuildOnCreate" {$triggerBuildOnCreate}">
+            <div class="description">Enable for trigger a build when a new pull request is created</div>
+        </div>
+        <div class="field-group">
+            <label for="triggerBuildOnUpdate">Trigger on update pull-request</label>
+            <input class="checkbox" type="checkbox" id="triggerBuildOnUpdate" name="triggerBuildOnUpdate" title="triggerBuildOnUpdate" {$triggerBuildOnUpdate}">
+            <div class="description">Enable for trigger a build when a pull request is updated</div>
+        </div>
+        <div class="field-group">
+            <label for="triggerBuildOnReopen">Trigger on reopen pull-request</label>
+            <input class="checkbox" type="checkbox" id="triggerBuildOnReopen" name="triggerBuildOnReopen" title="triggerBuildOnCreate" {$triggerBuildOnReopen}">
+            <div class="description">Enable for trigger a build when a pull request is reopen</div>
+        </div>
+        
+        <div class="field-group">
+            <label for="jenkinsBaseUrl">Url<span class="aui-icon icon-required"> required</span></label>
+            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" value="{$jenkinsBaseUrl}">
+            <div class="description">A Base Url to the Jenkins API</div>
+        </div>
+        
+        <div class="field-group">
+            <label for="jenkinsUserName">Username</label>
+            <input class="text"" type="text" id="jenkinsUserName" name="jenkinsUserName" title="Username" value="{$jenkinsUserName}">
+            <div class="description">Jenkins username</div>
+        </div>
+        <div class="field-group">
+            <label for="jenkinsPassword" accesskey="p">Password</label>
+            <input class="password" type="password" id="jenkinsPassword" name="jenkinsPassword" title="password" value="{$jenkinsPassword}">
+        </div>
+        
+        <div class="field-group">
+            <label for="buildRefField">Build ref. field<span class="aui-icon icon-required"> required</span></label>
+            <input class="text" type="text" id="buildRefField" name="buildRefField" title="Build ref. field" value="{$buildRefField}">
+            <div class="description">The name of the build reference field for the jenkins job</div>
+        </div>
+        
+        <div class="field-group">
+            <label for="buildTitleField">Build title field</label>
+            <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
+            <div class="description">Build title field</div>
+        </div>
+    </fieldset>
+
+    
+    <div class="buttons-container">
+        <div class="buttons">
+            <input class="button submit" type="submit" value="Save" id="d-save-btn1">
+            <a class="cancel" href="#">Cancel</a>
+        </div>
+    </div>
+</form>  
+</body>
+</html>
+{/template}

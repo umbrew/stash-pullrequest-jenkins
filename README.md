@@ -1,0 +1,1 @@
+This is stash plugin for setup create/update/reopen pull-request to trigger a build on Jenkins CI

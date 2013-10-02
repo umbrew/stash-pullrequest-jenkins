@@ -1,0 +1,21 @@
+# Eclipse files
+*.classpath
+*.project
+*.settings
+
+# Intellij files
+.idea
+*.iml
+*.eml
+*.ipr
+*.iws
+out/
+.home/
+
+
+# maven stuff
+target
+
+# other
+*~
+*.swp

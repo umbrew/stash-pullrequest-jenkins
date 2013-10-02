@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+    </plugin-info>
+
+ 	<component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
+    <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
+    <component-import key="repositoryService" interface="com.atlassian.stash.repository.RepositoryService"/>
+    <component-import key="pullRequestService" interface="com.atlassian.stash.pull.PullRequestService"/>
+    <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
+    <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
+        
+    <component key="PullRequest" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsTriggerJobIntergration"/>
+
+	<servlet name="Repository Servlet" key="repository-servlet" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsIntegrationPluginSettingsServlet">
+        <description key="repository-servlet.description">The Repository Servlet Plugin</description>
+        <url-pattern>/example/repository/*</url-pattern>
+    </servlet>
+
+	<stash-resource key="setting-soy" name="Jenkins Pull Request Integration Templates">
+        <directory location="/static/"/>
+    </stash-resource>
+    
+    <web-item key="repository-settings-plugin-tab" name="Repository settings navigation tab"
+              section="stash.repository.settings.panel/repository-settings-section" weight="50">
+        <label>Jenkins Pull Request integration</label>
+        <link>/plugins/servlet/example/repository/${repository.project.key}/${repository.slug}/</link>
+        <tooltip>Automatic trigger a Jenkins job when a pull request is created or updated</tooltip>
+    </web-item>
+    
+</atlassian-plugin>
