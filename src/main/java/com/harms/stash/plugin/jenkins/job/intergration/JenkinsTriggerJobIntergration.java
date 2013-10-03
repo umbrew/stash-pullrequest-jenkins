@@ -41,6 +41,7 @@ import com.atlassian.stash.pull.PullRequestService;
 
 public class JenkinsTriggerJobIntergration {
 
+  
     private static final String NEXT_BUILD_NUMBER = "nextBuildNumber";
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsTriggerJobIntergration.class);
@@ -55,6 +56,10 @@ public class JenkinsTriggerJobIntergration {
     private static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     private static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
  
+    private static final String PULLREQUEST_EVENT_CREATED = "CREATED";
+    private static final String PULLREQUEST_EVENT_SOURCE_UPDATED = "SOURCE UPDATED";
+    private static final String PULLREQUEST_EVENT_REOPEN = "REOPEN";
+    
     
     private final PullRequestService pullRequestService;
 	private String jenkinsBaseUrl;
@@ -80,6 +85,9 @@ public class JenkinsTriggerJobIntergration {
 	    userName = "";
 	    password = "";
 	    buildTitleField = "";
+	    triggerBuildOnCreate = false;
+	    triggerBuildOnReopen = false;
+	    triggerBuildOnUpdate = false;
 	    
         if (pluginSettings.get(JENKINS_BASE_URL) != null){
             jenkinsBaseUrl = (String) pluginSettings.get(JENKINS_BASE_URL);
@@ -146,15 +154,25 @@ public class JenkinsTriggerJobIntergration {
                 log.error("Error triggering: " + url, e);
                 throw e;
             } else {
-                Header headers = response.getFirstHeader("Location");
-                String responseUrl = jenkinsBaseUrl;
-                if (headers != null && nextBuildNo != null) {
-                    responseUrl = headers.getValue()+nextBuildNo+"/";
-                }
-                String comment = String.format("Build triggered for %s on %s",pr.getFromRef().getLatestChangeset(),responseUrl);
-                pullRequestService.addComment(pr.getFromRef().getRepository().getId(), pr.getId(), comment);
+                addComment(pushEvent, response, nextBuildNo);
             }
         }
+    }
+
+    private void addComment(PullRequestEvent pushEvent, HttpResponse response, String nextBuildNo) {
+        Header headers = response.getFirstHeader("Location");
+        String responseUrl = jenkinsBaseUrl;
+        if (headers != null && nextBuildNo != null) {
+            responseUrl = headers.getValue()+nextBuildNo+"/";
+        }
+        String eventType = PULLREQUEST_EVENT_CREATED;
+        if (pushEvent instanceof PullRequestRescopedEvent) {
+           eventType = PULLREQUEST_EVENT_SOURCE_UPDATED;
+        } else if (pushEvent instanceof PullRequestReopenedEvent) {
+           eventType = PULLREQUEST_EVENT_REOPEN;
+        }
+        String comment = String.format("Build triggered(%s) for %s on %s",eventType,pushEvent.getPullRequest().getFromRef().getLatestChangeset(),responseUrl);
+        pullRequestService.addComment(pushEvent.getPullRequest().getToRef().getRepository().getId(), pushEvent.getPullRequest().getId(), comment);
     }
 
     private String nextBuildNo(String json) {
@@ -191,7 +209,7 @@ public class JenkinsTriggerJobIntergration {
     public void updatePullRequest(PullRequestRescopedEvent pushEvent)
     {
         getPluginSettings();
-        if (triggerBuildOnUpdate) {
+        if ((triggerBuildOnUpdate) && (!pushEvent.getPullRequest().getFromRef().getLatestChangeset().equals(pushEvent.getPreviousFromHash()))) {
             triggerBuild(pushEvent);
         }
     }
