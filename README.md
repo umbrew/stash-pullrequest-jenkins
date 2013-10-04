@@ -34,5 +34,6 @@ For building the source execute the maven build manager that is part of the "Atl
 * Support for adding Jenkins API token
 * Support for plug-in settings per repository. 
 * Automatic refresh the pull-request page when it's updated with job information
+* Support for disable automatic build the pull-request
  
  
