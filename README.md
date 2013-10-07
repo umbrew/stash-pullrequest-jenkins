@@ -19,7 +19,7 @@ For installing the plug-in you need to open the "Administration" -> "Manage Add-
  
 Go to your repository and choose "settings" -> "Jenkins Pull Request integration" :
 
-* "Trigger on new pull-request" - checked if it should trigger a build when a pull-request created.
+* "Trigger on new pull-request" - checked if it should trigger a build when a pull-request is created.
 * "Trigger on update pull-request" - checked if it should trigger a build when source SHA-1 is updated.
 * "Trigger on reopen pull-request" - checked if it should trigger a build when the pull-request is reopen
 * "Url" - the base URL pointing to the job http://softbuild:8082/job/Single-Revision-Build/
@@ -31,7 +31,7 @@ Go to your repository and choose "settings" -> "Jenkins Pull Request integration
 ##  Building the source
 For building the source it's required you install the [Atlassian Plugin SDK](https://developer.atlassian.com/display/DOCS/Set+up+the+Atlassian+Plugin+SDK+and+Build+a+Project) The easiest way is to follow the link
  
-For building the source execute the maven build manager that is part of the "Atlassian Plugin SDK" "mvn install" compiles and build the "jenkins-integration-plugin" artifact.
+Building the source is pretty easy, just execute the maven build manager that is part of the "Atlassian Plugin SDK" "mvn install" compiles and build the "jenkins-integration-plugin" artifact.
  
 ##  Thinks on my todo list
 
