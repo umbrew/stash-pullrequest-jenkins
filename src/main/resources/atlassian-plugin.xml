@@ -16,19 +16,41 @@
         
     <component key="PullRequest" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsTriggerJobIntergration"/>
 
-	<servlet name="Repository Servlet" key="repository-servlet" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsIntegrationPluginSettingsServlet">
+	<servlet name="Repository Servlet" key="repository-servlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.JenkinsIntegrationPluginSettingsServlet">
         <description key="repository-servlet.description">The Repository Servlet Plugin</description>
-        <url-pattern>/example/repository/*</url-pattern>
+        <url-pattern>/jenkins/repository/*</url-pattern>
     </servlet>
 
 	<stash-resource key="setting-soy" name="Jenkins Pull Request Integration Templates">
         <directory location="/static/"/>
     </stash-resource>
     
+    <web-resource key="pr-overview-resources">
+        <transformation extension="soy">
+            <transformer key="soyTransformer" />
+        </transformation>
+
+        <transformation extension="less">
+            <transformer key="less-transformer" />
+        </transformation>
+
+        <resource type="download" name="pull-request-overview.soy.js" location="/static/pull-request-overview.soy" />
+        <resource type="download" name="pull-request-overview.js" location="/static/pull-request-overview.js"/>
+        <resource type="download" name="pull-request-overview.css" location="/static/pull-request-overview.less" />
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.stash.stash-web-api:pull-request-web-panels</dependency>
+    </web-resource>
+
+    <client-web-panel key="disable-automatic-build" location="stash.pull-request.links">
+        <resource name="view" type="soy" location="org.harms.stash.jenkins-integration-plugin:pr-overview-resources/stash.config.jenkins.job.integration.disableAutomaticBuildForm" />
+		<resource type="download" name="pull-request-overview.js" location="/static/pull-request-overview.js"/>
+        <client-condition>PULLREQUEST._pullRequestIsOpen</client-condition>
+    </client-web-panel>
+    
     <web-item key="repository-settings-plugin-tab" name="Repository settings navigation tab"
               section="stash.repository.settings.panel/repository-settings-section" weight="50">
         <label>Jenkins Pull Request integration</label>
-        <link>/plugins/servlet/example/repository/${repository.project.key}/${repository.slug}/</link>
+        <link>/plugins/servlet/jenkins/repository/${repository.project.key}/${repository.slug}/</link>
         <tooltip>Automatic trigger a Jenkins job when a pull request is created or updated</tooltip>
     </web-item>
     
