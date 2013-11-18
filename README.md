@@ -32,11 +32,14 @@ Go to your repository and choose "settings" -> "Jenkins Pull Request integration
 For building the source it's required you install the [Atlassian Plugin SDK](https://developer.atlassian.com/display/DOCS/Set+up+the+Atlassian+Plugin+SDK+and+Build+a+Project) The easiest way is to follow the link
  
 Building the source is pretty easy, just execute the maven build manager that is part of the "Atlassian Plugin SDK" "mvn install" compiles and build the "jenkins-integration-plugin" artifact.
- 
+
+##  Upgrade from 1.0.0 to 1.0.1
+With version 1.0.1 there is now support for multiple repository settings. When you install the plug-in it's required to go to the plug-in settings
+for upgrading. Go to your repository and choose "settings" -> "Jenkins Pull Request integration" and it will automatic upgrade the configuration
+
 ##  Thinks on my todo list
 
 * Support for adding Jenkins API token
-* Support for plug-in settings per repository. 
 * Automatic refresh the pull-request page when it's updated with job information
 
  
