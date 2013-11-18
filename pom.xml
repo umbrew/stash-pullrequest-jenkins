@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	
+	<groupId>org.harms.stash</groupId>
+	<artifactId>jenkins-integration-plugin</artifactId>
+	<version>1.0.1-SNAPSHOT</version>
+	<packaging>atlassian-plugin</packaging>
+	
 	<repositories>
 		<repository>
 			<id>atlassian-public</id>
@@ -17,7 +24,6 @@
 			</releases>
 		</repository>
 	</repositories>
-
 	<pluginRepositories>
 		<pluginRepository>
 			<id>atlassian-public</id>
@@ -31,23 +37,15 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
-
-	<groupId>org.harms.stash</groupId>
-	<artifactId>jenkins-integration-plugin</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
-	<packaging>atlassian-plugin</packaging>
-
+	
 	<scm>
 		<connection>scm:git:ssh://git@stash-dev.atlassian.com:7999/STASH/stash-sourcetree-plugin.git</connection>
 		<developerConnection>scm:git:ssh://git@stash-dev.atlassian.com:7999/STASH/stash-sourcetree-plugin.git</developerConnection>
 		<url>https://stash-dev.atlassian.com/projects/STASH/repos/stash-sourcetree-plugin</url>
 	</scm>
-
 	<organization>
 		<name>Flemming Harms</name>
 	</organization>
-
-
 	<name>Jenkins Pull-Request Integration</name>
 	<description>Automatic trigger a Jenkins job when a pull request is created or updated. Install this plug-in by install it under Stash-&gt;Settings-&gt;Managed Add-ons and Navigate to your repository and hit the Settings tab.</description>
 	<dependencyManagement>
@@ -61,7 +59,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.atlassian.stash</groupId>
@@ -103,13 +100,41 @@
 			<artifactId>commons-lang</artifactId>
 		</dependency>
 		<dependency>
-		  <groupId>org.apache.httpcomponents</groupId>
-		  <artifactId>httpclient</artifactId>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- these are here to override transitive versions -->
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>jsr311-api</artifactId>
+			<version>1.1.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+		</dependency>
+
 	</dependencies>
-
 	<build>
-
 		<plugins>
 			<plugin>
 				<groupId>com.atlassian.maven.plugins</groupId>
@@ -141,11 +166,10 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<properties>
 		<stash.version>2.5.1</stash.version>
 		<stash.data.version>2.2.0-m2</stash.data.version>
-		<amps.version>4.2.9</amps.version>
+		<amps.version>4.2.10</amps.version>
+		<plugin.testrunner.version>1.1</plugin.testrunner.version>
 	</properties>
-
 </project>

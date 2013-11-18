@@ -12,6 +12,9 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
     
+    public static final String PLUGIN_VERISON = PLUGIN_STORAGE_KEY + ".pluginVersion";
+    
+    
     /**
      * Return the pull-request settings key. 
      * @param projectKey - The project key
@@ -21,5 +24,9 @@ public class PluginSettingsHelper {
      */
     static public String getDisableAutomaticBuildSettingsKey(String projectKey, String slug, String pullRequestId) {
         return "stash.plugin.jenkins.settingsui." + projectKey + "/" + slug+ "/" +pullRequestId;
+    }
+    
+    static public String getPluginKey(String baseKey, String slug) {
+        return baseKey+slug;
     }
 }
