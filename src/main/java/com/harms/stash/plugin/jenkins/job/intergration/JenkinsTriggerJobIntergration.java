@@ -101,8 +101,9 @@ public class JenkinsTriggerJobIntergration {
 	
 	/**
 	 * Load the plug-in settings
+	 * @param slug - slug id 
 	 */
-	private void loadPluginSettings() {
+	private void loadPluginSettings(String slug) {
 	    PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
 	    
 	    buildTitleField = "";
@@ -110,19 +111,19 @@ public class JenkinsTriggerJobIntergration {
 	    triggerBuildOnReopen = false;
 	    triggerBuildOnUpdate = false;
 	    
-        jenkinsBaseUrl = (String) pluginSettings.get(PluginSettingsHelper.JENKINS_BASE_URL);
+        jenkinsBaseUrl = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug));
         
-        userName = (String) pluginSettings.get(PluginSettingsHelper.JENKINS_USERNAME);
-        password = (String) pluginSettings.get(PluginSettingsHelper.JENKINS_PASSWORD);
+        userName = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug));
+        password = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug));
         
-        buildRefField = (String) pluginSettings.get(PluginSettingsHelper.BUILD_REF_FIELD);
+        buildRefField = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
 
-        if (pluginSettings.get(PluginSettingsHelper.BUILD_TITLE_FIELD) != null){
-           buildTitleField = (String) pluginSettings.get(PluginSettingsHelper.BUILD_TITLE_FIELD);
+        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug)) != null){
+           buildTitleField = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug));
         }
-        triggerBuildOnCreate = (pluginSettings.get(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE) != null);
-        triggerBuildOnReopen = (pluginSettings.get(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN) != null);
-        triggerBuildOnUpdate = (pluginSettings.get(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE) != null);
+        triggerBuildOnCreate = (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug)) != null);
+        triggerBuildOnReopen = (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug)) != null);
+        triggerBuildOnUpdate = (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug)) != null);
 	}
 	
 	private boolean validateSettings() {
@@ -239,7 +240,7 @@ public class JenkinsTriggerJobIntergration {
     @EventListener
     public void openPullRequest(PullRequestOpenedEvent pushEvent)
     {
-        loadPluginSettings();
+        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
         if (triggerBuildOnCreate && validateSettings()) {
             triggerBuild(pushEvent);
         }
@@ -248,7 +249,7 @@ public class JenkinsTriggerJobIntergration {
     @EventListener
     public void updatePullRequest(PullRequestRescopedEvent pushEvent)
     {
-        loadPluginSettings();
+        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
         boolean isSourceChanged = !pushEvent.getPullRequest().getFromRef().getLatestChangeset().equals(pushEvent.getPreviousFromHash());
         
         if ((triggerBuildOnUpdate) && (!isAutomaticBuildDisabled(pushEvent)) && (validateSettings()) && (isSourceChanged)) {
@@ -259,7 +260,7 @@ public class JenkinsTriggerJobIntergration {
     @EventListener
     public void reopenPullRequest(PullRequestReopenedEvent pushEvent)
     {
-        loadPluginSettings();
+        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
         if (triggerBuildOnReopen && !isAutomaticBuildDisabled(pushEvent)) {
             triggerBuild(pushEvent);
          
