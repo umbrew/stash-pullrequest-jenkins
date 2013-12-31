@@ -6,7 +6,7 @@
 	
 	<groupId>org.harms.stash</groupId>
 	<artifactId>jenkins-integration-plugin</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.2-SNAPSHOT</version>
 	<packaging>atlassian-plugin</packaging>
 	
 	<repositories>
@@ -84,6 +84,12 @@
 			<groupId>com.atlassian.stash</groupId>
 			<artifactId>stash-page-objects</artifactId>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>log4j-over-slf4j</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.atlassian.soy</groupId>

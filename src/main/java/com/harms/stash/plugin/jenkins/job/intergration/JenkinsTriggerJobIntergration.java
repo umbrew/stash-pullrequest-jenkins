@@ -42,6 +42,8 @@ import com.atlassian.stash.event.pull.PullRequestRescopedEvent;
 import com.atlassian.stash.pull.PullRequest;
 import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.repository.Repository;
+import com.harms.stash.plugin.jenkins.job.settings.DecryptException;
+import com.harms.stash.plugin.jenkins.job.settings.EncryptException;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 public class JenkinsTriggerJobIntergration {
@@ -55,8 +57,8 @@ public class JenkinsTriggerJobIntergration {
     
     private final PullRequestService pullRequestService;
 	private String jenkinsBaseUrl;
-	private String userName;
-	private String password;
+	private byte[] userName;
+	private byte[] password;
 	private String buildRefField;
 	private String buildTitleField;
     private PluginSettingsFactory pluginSettingsFactory;
@@ -102,8 +104,9 @@ public class JenkinsTriggerJobIntergration {
 	/**
 	 * Load the plug-in settings
 	 * @param slug - slug id 
+	 * @throws EncryptException 
 	 */
-	private void loadPluginSettings(String slug) {
+	private void loadPluginSettings(String slug) throws DecryptException {
 	    PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
 	    
 	    buildTitleField = "";
@@ -113,8 +116,8 @@ public class JenkinsTriggerJobIntergration {
 	    
         jenkinsBaseUrl = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug));
         
-        userName = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug));
-        password = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug));
+        userName = PluginSettingsHelper.getUsername(slug, pluginSettings);
+        password = PluginSettingsHelper.getPassword(slug, pluginSettings);
         
         buildRefField = (String) pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
 
@@ -218,14 +221,14 @@ public class JenkinsTriggerJobIntergration {
         return json.substring(startIdx+2, json.indexOf(',', startIdx));
     }
 
-    private HttpResponse httpClientRequest(HttpRequestBase request, String userName, String password) throws IOException, ClientProtocolException {
+    private HttpResponse httpClientRequest(HttpRequestBase request, byte[] userName, byte[] password) throws IOException, ClientProtocolException {
         DefaultHttpClient client;
         client = new DefaultHttpClient();
 
         BasicHttpContext context = new BasicHttpContext();
 
         if (userName != null && password != null) {
-            client.getCredentialsProvider().setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT), new UsernamePasswordCredentials(userName, password));
+            client.getCredentialsProvider().setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT), new UsernamePasswordCredentials(new String(userName), new String(password)));
 
             BasicScheme basicAuth = new BasicScheme();
             context.setAttribute("preemptive-auth", basicAuth);
@@ -240,30 +243,43 @@ public class JenkinsTriggerJobIntergration {
     @EventListener
     public void openPullRequest(PullRequestOpenedEvent pushEvent)
     {
-        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
-        if (triggerBuildOnCreate && validateSettings()) {
-            triggerBuild(pushEvent);
+        try {
+            loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
+            if (triggerBuildOnCreate && validateSettings()) {
+                triggerBuild(pushEvent);
+            }
+        } catch (DecryptException e) {
+            log.error("Not able to read plug-in setting",e);
         }
     }
     
     @EventListener
     public void updatePullRequest(PullRequestRescopedEvent pushEvent)
     {
-        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
-        boolean isSourceChanged = !pushEvent.getPullRequest().getFromRef().getLatestChangeset().equals(pushEvent.getPreviousFromHash());
-        
-        if ((triggerBuildOnUpdate) && (!isAutomaticBuildDisabled(pushEvent)) && (validateSettings()) && (isSourceChanged)) {
-            triggerBuild(pushEvent);
+        try {
+            loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
+       
+            boolean isSourceChanged = !pushEvent.getPullRequest().getFromRef().getLatestChangeset().equals(pushEvent.getPreviousFromHash());
+            
+            if ((triggerBuildOnUpdate) && (!isAutomaticBuildDisabled(pushEvent)) && (validateSettings()) && (isSourceChanged)) {
+                triggerBuild(pushEvent);
+            }
+        } catch (DecryptException e) {
+            log.error("Not able to read plug-in setting",e);
         }
     }
     
     @EventListener
     public void reopenPullRequest(PullRequestReopenedEvent pushEvent)
     {
-        loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
-        if (triggerBuildOnReopen && !isAutomaticBuildDisabled(pushEvent)) {
-            triggerBuild(pushEvent);
-         
+        try {
+            loadPluginSettings(pushEvent.getPullRequest().getFromRef().getRepository().getSlug());
+            if (triggerBuildOnReopen && !isAutomaticBuildDisabled(pushEvent)) {
+                triggerBuild(pushEvent);
+                
+            }
+        } catch (DecryptException e) {
+            log.error("Not able to read plug-in setting",e);
         }
     }
     

@@ -40,7 +40,7 @@ public class ProcessUpgradeTest {
         
         Mockito.verify(pluginSettings,Mockito.times(1)).get(PluginSettingsHelper.PLUGIN_VERISON);
         Mockito.verify(pluginSettings,Mockito.times(1)).put(PluginSettingsHelper.PLUGIN_VERISON,"1.0.1");
-        Mockito.verify(intialUpgrade,Mockito.times(2)).getVersion();
+        Mockito.verify(intialUpgrade,Mockito.times(4)).getVersion();
         Mockito.verify(intialUpgrade,Mockito.times(1)).perform(pluginSettings);
     }
     
@@ -56,7 +56,7 @@ public class ProcessUpgradeTest {
         
         Mockito.verify(pluginSettings,Mockito.times(2)).get(PluginSettingsHelper.PLUGIN_VERISON);
         Mockito.verify(pluginSettings,Mockito.times(1)).put(PluginSettingsHelper.PLUGIN_VERISON,"1.0.1");
-        Mockito.verify(intialUpgrade,Mockito.times(2)).getVersion();
+        Mockito.verify(intialUpgrade,Mockito.times(4)).getVersion();
         Mockito.verify(intialUpgrade,Mockito.times(1)).perform(pluginSettings);
         Mockito.verify(testUpgradeStep,Mockito.times(1)).getVersion();
     }
@@ -75,10 +75,10 @@ public class ProcessUpgradeTest {
         Mockito.verify(pluginSettings,Mockito.times(1)).put(PluginSettingsHelper.PLUGIN_VERISON,"1.0.1");
         Mockito.verify(pluginSettings,Mockito.times(1)).put(PluginSettingsHelper.PLUGIN_VERISON,"1.0.2");
         
-        Mockito.verify(intialUpgrade,Mockito.times(2)).getVersion();
+        Mockito.verify(intialUpgrade,Mockito.times(4)).getVersion();
         Mockito.verify(intialUpgrade,Mockito.times(1)).perform(pluginSettings);
         
-        Mockito.verify(testUpgradeStep,Mockito.times(2)).getVersion();
+        Mockito.verify(testUpgradeStep,Mockito.times(4)).getVersion();
         Mockito.verify(testUpgradeStep,Mockito.times(1)).perform(pluginSettings);
     }
     

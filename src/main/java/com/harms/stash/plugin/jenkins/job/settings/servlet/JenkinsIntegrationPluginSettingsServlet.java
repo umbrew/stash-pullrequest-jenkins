@@ -8,6 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.user.UserManager;
@@ -17,13 +20,17 @@ import com.atlassian.soy.renderer.SoyTemplateRenderer;
 import com.atlassian.stash.repository.Repository;
 import com.atlassian.stash.repository.RepositoryService;
 import com.google.common.collect.Maps;
+import com.harms.stash.plugin.jenkins.job.settings.DecryptException;
+import com.harms.stash.plugin.jenkins.job.settings.EncryptException;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.UpgradeService;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_1;
+import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
 
 public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private static final long serialVersionUID = -1645440333554544743L;
     
+    private static final Logger log = LoggerFactory.getLogger(JenkinsIntegrationPluginSettingsServlet.class);
     private final SoyTemplateRenderer soyTemplateRenderer;
     private final RepositoryService repositoryService;
     private final PluginSettingsFactory pluginSettingsFactory;
@@ -74,7 +81,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
             updatePullRequestSetttings(pluginSettings, req.getParameter("disableBuildParameter"), repository.getProject().getKey(),repository.getSlug(),components[3]);
             resp.setStatus(HttpServletResponse.SC_OK);
         } else {
-           updatePluginSettings(pluginSettings, req.getParameterMap());
+           try {
+               updatePluginSettings(pluginSettings, req.getParameterMap());
+            } catch (EncryptException e) {
+                throw new ServletException("Not able to update the settings",e);
+            }
            resp.sendRedirect(req.getRequestURI());
         }    
     }
@@ -84,8 +95,9 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
      * Update plugin settings from the parameterMap
      * @param ps - {@link PluginSettings} 
      * @param parameterMap - A map containing parameter name and value 
+     * @throws EncryptException 
      */
-    private void updatePluginSettings(PluginSettings ps, Map<String, String[]> parameterMap) {
+    private void updatePluginSettings(PluginSettings ps, Map<String, String[]> parameterMap) throws EncryptException {
         String slug = parameterMap.get("repository.slug")[0];
         resetSettings(ps,slug);
         ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug), parameterMap.get("jenkinsBaseUrl")[0]);
@@ -104,10 +116,10 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         }
         
         if (!parameterMap.get("jenkinsUserName")[0].isEmpty()) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug), parameterMap.get("jenkinsUserName")[0]); 
+            PluginSettingsHelper.setUsername(slug, parameterMap.get("jenkinsUserName")[0].getBytes(), ps);
         }
         if (!parameterMap.get("jenkinsPassword")[0].isEmpty()) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug), parameterMap.get("jenkinsPassword")[0]);
+            PluginSettingsHelper.setPassword(slug, parameterMap.get("jenkinsPassword")[0].getBytes(), ps);
         }
 
         if (!parameterMap.get("buildTitleField")[0].isEmpty()) {
@@ -200,7 +212,8 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
      */
     private void upgradeSettings(Repository repository) {
         upgradeService.addUpgradeStep(new Upgrade_1_0_1(repository.getSlug()));
-        upgradeService.process(); //if the upgrade is already executed this will just retun
+        upgradeService.addUpgradeStep(new Upgrade_1_0_2(repository.getSlug()));
+        upgradeService.process(); //if the upgrade is already executed this will just return
     }
 
     private String readPullRequestSettings(HttpServletResponse resp, String pullRequestId, Repository repository) throws IOException {
@@ -216,12 +229,24 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
             context.put("jenkinsBaseUrl", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug)));
         }
         
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug)) != null){
-            context.put("jenkinsUserName", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug)));
+        String usernameKey = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug);
+        if (pluginSettings.get(usernameKey) != null){
+            try {
+                context.put("jenkinsUserName",new String(PluginSettingsHelper.getUsername(slug, pluginSettings)));
+            } catch (DecryptException e) {
+                log.error("Not able to decrypt the username, will reset the field. You will have to re-enter username",e);
+                context.put("jenkinsUserName","");
+            }
         }
         
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug)) != null){
-            context.put("jenkinsPassword", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug)));
+        String passwordKey = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug);
+        if (pluginSettings.get(passwordKey) != null){
+            try {
+                context.put("jenkinsPassword", new String(PluginSettingsHelper.getPassword(slug, pluginSettings)));
+            } catch (DecryptException e) {
+                log.error("Not able to decrypt the password, will reset the field. You will have to re-enter password",e);
+                context.put("jenkinsPassword","");
+            }
         }
         
         if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug)) != null){
