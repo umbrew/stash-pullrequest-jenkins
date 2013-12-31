@@ -154,10 +154,14 @@ public class JenkinsTriggerJobIntergration {
             response = httpClientRequest(post, userName, password);
             EntityUtils.consume(response.getEntity());
         } catch (Exception e) {
+            String comment = String.format("Failed to trigger build %s\nmessage : %s",url,e.getMessage());
+            addErrorComment(pushEvent, comment);
             throw new RuntimeException(e);
         } finally {
             if (response.getStatusLine().getStatusCode() >= 400) {
                 RuntimeException e = new RuntimeException("Failed : HTTP error code : " + response.getStatusLine().getStatusCode());
+                String comment = String.format("Failed to call %s\nHTTP error code : %s",url,response.getStatusLine().getStatusCode());
+                addErrorComment(pushEvent, comment);
                 log.error("Error triggering: " + url, e);
                 throw e;
             } else {
@@ -212,6 +216,14 @@ public class JenkinsTriggerJobIntergration {
     }
 
     /**
+     * Add a error message to the pull-request comment section
+     * @param pushEvent
+     * @param e - the {@link Exception}
+     */
+    private void addErrorComment(PullRequestEvent pushEvent, String comment) {
+          pullRequestService.addComment(pushEvent.getPullRequest().getToRef().getRepository().getId(), pushEvent.getPullRequest().getId(), comment);
+    }
+    /**
      * Parse the JSON output and retrieve the next build number
      * @param json - json output from Jenkins
      * @return - the next build number
@@ -249,6 +261,8 @@ public class JenkinsTriggerJobIntergration {
                 triggerBuild(pushEvent);
             }
         } catch (DecryptException e) {
+            String comment = String.format("Error reading plug-in settings, please consult the logs for details %s",e.getMessage());
+            addErrorComment(pushEvent, comment);
             log.error("Not able to read plug-in setting",e);
         }
     }
@@ -265,6 +279,8 @@ public class JenkinsTriggerJobIntergration {
                 triggerBuild(pushEvent);
             }
         } catch (DecryptException e) {
+            String comment = String.format("Error reading plug-in settings, please consult the logs for details %s",e.getMessage());
+            addErrorComment(pushEvent, comment);
             log.error("Not able to read plug-in setting",e);
         }
     }
@@ -279,6 +295,8 @@ public class JenkinsTriggerJobIntergration {
                 
             }
         } catch (DecryptException e) {
+            String comment = String.format("Error reading plug-in settings, please consult the logs for details %s",e.getMessage());
+            addErrorComment(pushEvent, comment);
             log.error("Not able to read plug-in setting",e);
         }
     }
