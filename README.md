@@ -44,5 +44,7 @@ configuration if they change the network interface.
 This is not a bullet proof way of encrypt a password, but it’s at least better than storing it as plain text or store the key together
 with the password.
 
-Flemming Harms - Twitter: @fnharms
+Flemming Harms
+<a href="https://twitter.com/fnharms" class="twitter-follow-button" data-show-count="false" data-size="large">Follow @fnharms</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
  
