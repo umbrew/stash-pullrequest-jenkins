@@ -37,10 +37,12 @@ Building the source is pretty easy, just execute the maven build manager that is
 With version 1.0.1 there is now support for multiple repository settings. When you install the plug-in it's required to go to the plug-in settings
 for upgrading. Go to your repository and choose "settings" -> "Jenkins Pull Request integration" and it will automatic upgrade the configuration
 
-##  Thinks on my todo list
+##  Upgrade from 1.0.1 to 1.0.2
+Encrypt and Decrypt username and password based on the H/W MAC address. Because it use the MAC address users will have to update there
+configuration if they change the network interface.
 
-* Support for adding Jenkins API token
-* Automatic refresh the pull-request page when it's updated with job information
+This is not a bullet proof way of encrypt a password, but it’s at least better than storing it as plain text or store the key together
+with the password.
 
- 
+Flemming Harms - Twitter: @fnharms
  

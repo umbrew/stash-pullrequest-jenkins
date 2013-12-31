@@ -2,6 +2,9 @@ package com.harms.stash.plugin.jenkins.job.settings.upgrade;
 
 import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
@@ -14,8 +17,9 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  */
 public class UpgradeService  {
 
+    private static final Logger log = LoggerFactory.getLogger(UpgradeService.class);
     private ArrayList<Upgrade> upgradeStep = new ArrayList<Upgrade>();
-    private PluginSettings ps;
+    private final PluginSettings ps;
     
     /**
      * @param psf - the {@link PluginSettingsFactory} used for accessing the plugin settings
@@ -36,10 +40,13 @@ public class UpgradeService  {
     public void process() {
         for (Upgrade upgradeStep : this.upgradeStep) {
             if (upgradeStep.getVersion().compareTo(getCurrentVersion()) > 0) {
+                log.info(String.format("Executing upgrade step for version :%s",upgradeStep.getVersion()));
                 upgradeStep.perform(ps);
+                log.info(String.format("Finishing upgrading %s",upgradeStep.getVersion()));
                 setCurrentVersion(upgradeStep.getVersion());
             }
         }
+        upgradeStep.clear();
     }
     
     /**
@@ -64,5 +71,6 @@ public class UpgradeService  {
      */
     private void setCurrentVersion(String version) {
         ps.put(PluginSettingsHelper.PLUGIN_VERISON,version);
+        log.info(String.format("Writing version %s to plug-in settings",version));
     }
 }
