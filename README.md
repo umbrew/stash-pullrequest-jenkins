@@ -1,8 +1,8 @@
 # Jenkins Pull-Request Integration
 
-This started as project "how difficult could it be" to create a integration between Stash and Jenkins CI. 
+This started as a project "how difficult could it be" to create a integration between Stash and Jenkins CI. 
 So I decided to build a small plugin for Stash inspired by all the examples provided by Atlassian, 
-it's still working progress and it only tested with Stash 2.5.1 and Jenkins CI 1.509.2
+it's still working progress and it only tested with Stash 2.8.2 and Jenkins CI 1.509.2
 
 This stash plugin hook into create/update/reopen pull-request to trigger a build on Jenkins CI through the API. 
 3 hooks listing on events "PullRequestOpenedEvent", "PullRequestRescopedEvent" and "PullRequestReopenedEvent" and 
@@ -43,6 +43,11 @@ configuration if they change the network interface.
 
 This is not a bullet proof way of encrypt a password, but it’s at least better than storing it as plain text or store the key together
 with the password.
+
+Updated [02-01-2014]
+* Fixed an issue with null point when computing the encryption key. 
+* Upgrade Stash to version 2.8.2
+
 
 Flemming Harms
 

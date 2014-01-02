@@ -5,14 +5,16 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Enumeration;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.Charsets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.jersey.core.util.Base64;
 
@@ -23,39 +25,42 @@ import com.sun.jersey.core.util.Base64;
  */
 public class CryptoHelp {
 
+    private static final Logger log = LoggerFactory.getLogger(CryptoHelp.class);
     /**
      * @return a computed key based on the HW MAC address
      * @throws UnknownHostException
      * @throws SocketException
      */
     public static byte[] getComputedKey() throws UnknownHostException, SocketException {
-        InetAddress ip = InetAddress.getLocalHost();
- 
-        NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-        String hardwareAddress = formatAddress(network.getHardwareAddress());
-        return Arrays.copyOfRange(hardwareAddress.getBytes(Charsets.UTF_8),0,16);
+        String returnAddr = "";
+        Enumeration<NetworkInterface> ni = NetworkInterface.getNetworkInterfaces();
+        if (ni != null) {
+            while (ni.hasMoreElements()) {
+                NetworkInterface networkInterface = ni.nextElement();
+                if (networkInterface.isUp() && !networkInterface.isLoopback()) {
+                    byte[] mac = networkInterface.getHardwareAddress();
+                    if (mac != null) {
+                        /*
+                         * Extract each array of mac address and convert it to hexa with the following format 08-00-27-DC-4A-9E.
+                         */
+                        returnAddr = ""; //$NON-NLS-1$
+                        for (int i = 0; i < mac.length; i++) {
+                            returnAddr += String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        }
+                        log.info("Mac address found "+returnAddr); //$NON-NLS-1$
+                        break;
+                    } else {
+                        log.info("Mac address is not accessible, faling back to the hostname"); //$NON-NLS-1$
+                        returnAddr = InetAddress.getLocalHost().getHostName();
+                    }
+                }
+            }
+        } else {
+            log.info("Mac address is not accessible, falling back to the IP"); //$NON-NLS-1$
+            returnAddr = InetAddress.getLocalHost().getHostName();
+        }
+        return Arrays.copyOfRange(returnAddr.getBytes(Charsets.UTF_8),0,16);
     }
-    
-    private static String formatAddress(byte[] address) {
-        if (address == null) {
-          return null;
-        }
-
-        StringBuilder ret = new StringBuilder(address.length * 2);
-        for (byte b : address) {
-          if (ret.length() > 0) {
-            ret.append('-');
-          }
-
-          String bs = Integer.toHexString(b & 0x000000FF).toUpperCase();
-          if (bs.length() < 2) {
-            ret.append('0');
-          }
-          ret.append(bs);
-        }
-
-        return ret.toString();
-      }
     
     public static byte[] encrypt(byte[] key, byte[] value) throws GeneralSecurityException {
         if (key.length != 16) {
