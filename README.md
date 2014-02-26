@@ -45,6 +45,7 @@ This is not a bullet proof way of encrypt a password, but it’s at least better
 with the password.
 
 Updated [02-01-2014]
+
 * Fixed an issue with null point when computing the encryption key. 
 * Upgrade Stash to version 2.8.2
 

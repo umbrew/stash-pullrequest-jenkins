@@ -47,8 +47,6 @@ import com.harms.stash.plugin.jenkins.job.settings.EncryptException;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 public class JenkinsTriggerJobIntergration {
-    private static final String NEXT_BUILD_NUMBER = "nextBuildNumber";
-
     private static final Logger log = LoggerFactory.getLogger(JenkinsTriggerJobIntergration.class);
     
     private static final String PULLREQUEST_EVENT_CREATED = "CREATED";
@@ -144,11 +142,7 @@ public class JenkinsTriggerJobIntergration {
             url = buildJenkinsUrl(pr);
             HttpGet getNextBuildNo = new HttpGet(baseUrl+"/api/json");
             
-            //get the next build number. there is slide possibility this could happen concurrent with
-            //another user trigger a job manual and then the job number does not match the job that is
-            //triggered next.
             response = httpClientRequest(getNextBuildNo, userName, password);
-            nextBuildNo = nextBuildNo(EntityUtils.toString(response.getEntity()));
             HttpPost post = new HttpPost(url);
             
             response = httpClientRequest(post, userName, password);
@@ -203,7 +197,7 @@ public class JenkinsTriggerJobIntergration {
         Header headers = response.getFirstHeader("Location");
         String responseUrl = jenkinsBaseUrl;
         if (headers != null && jobNumber != null) {
-            responseUrl = headers.getValue()+jobNumber+"/";
+            responseUrl = headers.getValue()+"/";
         }
         String eventType = PULLREQUEST_EVENT_CREATED;
         if (pushEvent instanceof PullRequestRescopedEvent) {
@@ -223,16 +217,7 @@ public class JenkinsTriggerJobIntergration {
     private void addErrorComment(PullRequestEvent pushEvent, String comment) {
           pullRequestService.addComment(pushEvent.getPullRequest().getToRef().getRepository().getId(), pushEvent.getPullRequest().getId(), comment);
     }
-    /**
-     * Parse the JSON output and retrieve the next build number
-     * @param json - json output from Jenkins
-     * @return - the next build number
-     */
-    private String nextBuildNo(String json) {
-        int startIdx = json.indexOf(NEXT_BUILD_NUMBER)+NEXT_BUILD_NUMBER.length();
-        return json.substring(startIdx+2, json.indexOf(',', startIdx));
-    }
-
+    
     private HttpResponse httpClientRequest(HttpRequestBase request, byte[] userName, byte[] password) throws IOException, ClientProtocolException {
         DefaultHttpClient client;
         client = new DefaultHttpClient();
