@@ -22,7 +22,7 @@ Go to your repository and choose "settings" -> "Jenkins Pull Request integration
 * "Trigger on new pull-request" - checked if it should trigger a build when a pull-request is created.
 * "Trigger on update pull-request" - checked if it should trigger a build when source SHA-1 is updated.
 * "Trigger on reopen pull-request" - checked if it should trigger a build when the pull-request is reopen
-* "Url" - the base URL pointing to the job http://softbuild:8082/job/Single-Revision-Build/
+* "Url" - the base URL pointing to the job http://ci-server:8082/job/Single-Revision-Build/
 * "Username" - if jenkins require authentication
 * "Password" - if jenkins require authentication
 * "Build ref. field" - The name of job parameter the source SHA-1 should be set on when a build is triggered
@@ -44,11 +44,19 @@ configuration if they change the network interface.
 This is not a bullet proof way of encrypt a password, but it’s at least better than storing it as plain text or store the key together
 with the password.
 
+##  Upgrade from 1.0.2 to 1.0.3
+Support for simple load balancing against multiple CI servers. The only requirement is that all servers share the same user and API token.
+If one CI server fail to process the request it will try the next in the list until tried every server.
+
+Updated [01-03-2014]
+
+* Add support for simple load balancing. 
+* Disable the feature it posted the job URL as part of the comment because it will point to the wrong job in most cases 
+
 Updated [02-01-2014]
 
 * Fixed an issue with null point when computing the encryption key. 
 * Upgrade Stash to version 2.8.2
-
 
 Flemming Harms
 

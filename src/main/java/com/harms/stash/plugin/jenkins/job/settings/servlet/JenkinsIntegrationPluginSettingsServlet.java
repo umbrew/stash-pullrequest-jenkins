@@ -1,6 +1,7 @@
 package com.harms.stash.plugin.jenkins.job.settings.servlet;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -26,6 +27,7 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.UpgradeService;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_1;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
+import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_3;
 
 public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private static final long serialVersionUID = -1645440333554544743L;
@@ -100,7 +102,12 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private void updatePluginSettings(PluginSettings ps, Map<String, String[]> parameterMap) throws EncryptException {
         String slug = parameterMap.get("repository.slug")[0];
         resetSettings(ps,slug);
-        ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug), parameterMap.get("jenkinsBaseUrl")[0]);
+        
+        String[] jenkinsCIServerList = parameterMap.get("jenkinsCIServerList");
+        if (jenkinsCIServerList != null) {
+            String concatString = Arrays.toString(jenkinsCIServerList).trim();
+            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug), concatString.substring(1, concatString.length()-1));
+        }
         ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug), parameterMap.get("buildRefField")[0]);
         
         if (parameterMap.containsKey("triggerBuildOnCreate")) {
@@ -213,6 +220,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private void upgradeSettings(Repository repository) {
         upgradeService.addUpgradeStep(new Upgrade_1_0_1(repository.getSlug()));
         upgradeService.addUpgradeStep(new Upgrade_1_0_2(repository.getSlug()));
+        upgradeService.addUpgradeStep(new Upgrade_1_0_3(repository.getSlug()));
         upgradeService.process(); //if the upgrade is already executed this will just return
     }
 
@@ -225,8 +233,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private void readPluginSettings(Repository repository, Map<String, Object> context) {
         PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
         String slug = repository.getSlug();
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug)) != null){
-            context.put("jenkinsBaseUrl", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_BASE_URL,slug)));
+        
+        String ciServerList = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug);
+        if (pluginSettings.get(ciServerList) != null){
+            String[] serverList = ((String)pluginSettings.get(ciServerList)).split(",");
+            context.put("jenkinsCIServerList", serverList);
         }
         
         String usernameKey = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug);
@@ -278,6 +289,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         context.put("buildRefField", "");
         context.put("buildTitleField", "");
         context.put("jenkinsBaseUrl", "");
+        context.put("jenkinsCIServerList",null);
         context.put("triggerBuildOnCreate", "");
         context.put("triggerBuildOnUpdate", "");
         context.put("triggerBuildOnReopen", "");

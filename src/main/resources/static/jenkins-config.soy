@@ -2,7 +2,7 @@
 
 /**
  * @param repository Repository object
- * @param jenkinsBaseUrl Jenkins Base Url
+ * @param jenkinsCIServerList List of Jenkins servers 
  * @param jenkinsUserName Jenkins username
  * @param jenkinsPassword Jenkins password
  * @param buildRefField Build reference field
@@ -10,7 +10,6 @@
  * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
-  
  */
 {template .repositorySettings}
 <html>
@@ -24,8 +23,8 @@
 <body>
     <h3>Repository: {$repository.slug}</h3>
     <p>Welcome Jenkins pull request integration settings</p>
-    
-<form action="#" method="post" id="d" class="aui">
+<div id="aui-message-bar"></div>    
+<form action="#" method="post" id="jenkinsconfigform" class="aui">
     <fieldset>
         <div class="field-group">
             <label for="triggerBuildOnCreate">Trigger on new pull-request</label>
@@ -44,9 +43,22 @@
         </div>
         
         <div class="field-group">
-            <label for="jenkinsBaseUrl">Url<span class="aui-icon icon-required"> required</span></label>
-            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" value="{$jenkinsBaseUrl}">
+            <label for="jenkinsBaseUrl">Url</label>
+            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" > <button class="aui-button" type="button" id="addJenkinsCiServer">Add</button>            
             <div class="description">A Base Url to the Jenkins API</div>
+        </div>
+        
+         <div class="field-group">
+            <label for="multiselect">Jenkins CI servers<span class="aui-icon icon-required"> required</span></label>
+            <select class="multi-select" size="4" multiple="true" id="_jenkinsCIServerList" name="jenkinsCIServerList">
+             {if $jenkinsCIServerList}
+              {foreach $keyword in $jenkinsCIServerList}
+        		<option value="{$keyword}">{$keyword |bidiUnicodeWrap}</option>
+		      {/foreach}
+		     {/if}
+            </select>
+            <button class="aui-button" type="button" id="removeJenkinsCiServer" >Remove</button>
+            <div class="description">A list of Jenkins CI servers for executing jobs.</div>
         </div>
         
         <div class="field-group">
@@ -81,6 +93,62 @@
         </div>
     </div>
 </form>  
+	{literal}
+		<script>
+		  var editUrl = false;
+		  
+		  AJS.$(document).ready(function() {
+		         AJS.$("#addJenkinsCiServer").unbind("click").click(function(e) {
+		            var url = AJS.$("#jenkinsBaseUrl").val();
+		            if (url != null && url != "") {
+		                if (editUrl) {
+				          AJS.$("#_jenkinsCIServerList option:selected").replaceWith("<option value='"+url+"'>"+url+"</option>")
+				          editUrl = false;
+				        } else {
+				          AJS.$("#_jenkinsCIServerList").append("<option value='"+url+"'>"+url+"</option>")
+				        }
+				        AJS.$("#jenkinsBaseUrl").val("");
+					}
+			     });
+			    return false;
+		  });
+		  AJS.$(document).ready(function() {
+			     AJS.$("#removeJenkinsCiServer").unbind("click").click(function(e) {
+		            AJS.$("#_jenkinsCIServerList option:selected").remove();
+			     });
+			    return false;
+		  });
+		  AJS.$(document).ready(function() {
+			     AJS.$("#_jenkinsCIServerList").unbind("dblclick").dblclick(function(e) {
+		            AJS.$("#jenkinsBaseUrl").val(AJS.$("#_jenkinsCIServerList option:selected").val());
+		            editUrl = true;
+			     });
+			    return false;
+		  });
+		  AJS.$(document).ready(function() {
+			     AJS.$("#jenkinsconfigform").on('submit', function(e) { 
+					   
+				       AJS.$("#_jenkinsCIServerList").find('option').each(function() {
+							AJS.$(this).attr('selected', 'selected');
+					   });
+					   if (AJS.$("#buildRefField").val() == "") {
+					    e.preventDefault();
+					    AJS.messages.warning({
+					       title: "Mandatory Field",
+					       body: "The field \"Build ref. field\" require a value."
+					    });
+					   }
+					   if (AJS.$("#_jenkinsCIServerList option").size() == 0) {
+					    e.preventDefault();
+					    AJS.messages.warning({
+					       title: "Mandatory Field",
+					       body: "No CI servers is added to the list \"Jenkins CI servers\" as required."
+					    });
+					   }  
+    			 });
+		  });
+		</script>
+	{/literal}
 </body>
 </html>
 {/template}
