@@ -14,6 +14,8 @@ public class PluginSettingsHelper {
     public static final String JENKINS_PASSWORD = PLUGIN_STORAGE_KEY + ".jenkinsPassword";
     public static final String JENKINS_USERNAME = PLUGIN_STORAGE_KEY + ".jenkinsUserName";
     public static final String JENKINS_BASE_URL = PLUGIN_STORAGE_KEY + ".jenkinsBaseUrl";
+    public static final String JENKINS_CI_SERVER_LIST = PLUGIN_STORAGE_KEY + ".jenkinsCIServerList";
+    public static final String JENKINS_LAST_CI_SERVER = PLUGIN_STORAGE_KEY + ".jenkinsLastCIServer";
     public static final String TRIGGER_BUILD_ON_CREATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnCreate";
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
