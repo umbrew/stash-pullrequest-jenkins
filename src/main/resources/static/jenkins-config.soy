@@ -99,7 +99,7 @@
 		  
 		  AJS.$(document).ready(function() {
 		         AJS.$("#addJenkinsCiServer").unbind("click").click(function(e) {
-		            var url = AJS.$("#jenkinsBaseUrl").val();
+		            var url =  AJS.$.trim(AJS.$("#jenkinsBaseUrl").val());
 		            if (url != null && url != "") {
 		                if (editUrl) {
 				          AJS.$("#_jenkinsCIServerList option:selected").replaceWith("<option value='"+url+"'>"+url+"</option>")
