@@ -237,6 +237,9 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         String ciServerList = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug);
         if (pluginSettings.get(ciServerList) != null){
             String[] serverList = ((String)pluginSettings.get(ciServerList)).split(",");
+            for (int i = 0; i < serverList.length; i++) {
+                serverList[i] = serverList[i].trim();
+            }
             context.put("jenkinsCIServerList", serverList);
         }
         
