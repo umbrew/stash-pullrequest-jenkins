@@ -48,6 +48,13 @@ with the password.
 Support for simple load balancing against multiple CI servers. The only requirement is that all servers share the same user and API token.
 If one CI server fail to process the request it will try the next in the list until tried every server.
 
+##  Upgrade from 1.0.3 to 1.0.4
+- Added support for trigger a build manual from the pull-reques.
+- Tested with stash 2.10.1.
+- Fixed an issue with the list of build servers contains white spaces when it was loaded.
+
+
+
 Updated [01-03-2014]
 
 * Add support for simple load balancing. 

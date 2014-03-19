@@ -1,7 +1,6 @@
 package com.harms.stash.plugin.jenkins.job.settings.servlet;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -39,7 +38,6 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private final UserManager userManager;
     private final UpgradeService upgradeService;
 
-
     public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userService) {
         this.soyTemplateRenderer = soyTemplateRenderer;
         this.repositoryService = repositoryService;
@@ -54,7 +52,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         resp.setContentType("text/html;charset=UTF-8");
         try {
             soyTemplateRenderer.render(resp.getWriter(),
-                    "org.harms.stash.jenkins-integration-plugin:setting-soy",
+                    "com.harms.stash.jenkins-integration-plugin:setting-soy",
                     template,
                     data);
         } catch (SoyException e) {
@@ -68,6 +66,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.debug("Invoke JenkinsIntegrationPluginSettingsServlet");
         PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
         String pathInfo = req.getPathInfo();
 
@@ -80,7 +79,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         
         if (req.getParameter("disableBuildParameter") != null) {
             Repository repository = repositoryService.getBySlug(components[1], components[2]);
-            updatePullRequestSetttings(pluginSettings, req.getParameter("disableBuildParameter"), repository.getProject().getKey(),repository.getSlug(),components[3]);
+            updatePullRequestSetttings(pluginSettings, req.getParameter("disableBuildParameter"), repository.getProject().getKey(),repository.getSlug(),Long.valueOf(components[3]));
             resp.setStatus(HttpServletResponse.SC_OK);
         } else {
            try {
@@ -101,25 +100,25 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
      */
     private void updatePluginSettings(PluginSettings ps, Map<String, String[]> parameterMap) throws EncryptException {
         String slug = parameterMap.get("repository.slug")[0];
-        resetSettings(ps,slug);
+        PluginSettingsHelper.resetSettings(slug,ps);
         
         String[] jenkinsCIServerList = parameterMap.get("jenkinsCIServerList");
         if (jenkinsCIServerList != null) {
-            String concatString = Arrays.toString(jenkinsCIServerList).trim();
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug), concatString.substring(1, concatString.length()-1));
+            PluginSettingsHelper.setJenkinsCIServerList(jenkinsCIServerList, slug, ps);
         }
-        ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug), parameterMap.get("buildRefField")[0]);
+        
+        PluginSettingsHelper.setBuildReferenceField(slug, parameterMap.get("buildRefField")[0], ps);
         
         if (parameterMap.containsKey("triggerBuildOnCreate")) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug), "checked");
+            PluginSettingsHelper.enableTriggerOnCreate(slug, ps);
         }
         
         if (parameterMap.containsKey("triggerBuildOnUpdate")) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug), "checked");
+            PluginSettingsHelper.enableTriggerOnUpdate(slug, ps);
         }
         
         if (parameterMap.containsKey("triggerBuildOnReopen")) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug), "checked");
+            PluginSettingsHelper.enableTriggerOnReopen(slug, ps);
         }
         
         if (!parameterMap.get("jenkinsUserName")[0].isEmpty()) {
@@ -130,7 +129,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         }
 
         if (!parameterMap.get("buildTitleField")[0].isEmpty()) {
-            ps.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug), parameterMap.get("buildTitleField")[0]);
+            PluginSettingsHelper.setBuildTitleField(slug, parameterMap.get("buildTitleField")[0], ps);
         }
     }
 
@@ -142,30 +141,14 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
      * @param slug
      * @param pullRequestId
      */
-    private void updatePullRequestSetttings(PluginSettings pluginSettings, String disableAutomaticBuildParameter,String projectKey, String slug, String pullRequestId) {
-        String key = PluginSettingsHelper.getDisableAutomaticBuildSettingsKey(projectKey,slug,pullRequestId);
+    private void updatePullRequestSetttings(PluginSettings pluginSettings, String disableAutomaticBuildParameter,String projectKey, String slug, Long pullRequestId) {
         if (disableAutomaticBuildParameter.isEmpty()) {
-            pluginSettings.remove(key); 
+            PluginSettingsHelper.clearAutomaticBuildFlag(projectKey,slug,pullRequestId,pluginSettings); 
         } else {
-            pluginSettings.put(key, "checked");
+            PluginSettingsHelper.enableAutomaticBuildFlag(projectKey,slug,pullRequestId,pluginSettings); 
         }
-        return;
     }
 
-    /**
-     * Clear the Plugin settings
-     * @param pluginSettings
-     * @param slug - Repository Key
-     */
-    private void resetSettings(PluginSettings pluginSettings, String slug) {
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug));
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug));
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug));
-        
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug));
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug));
-        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug));
-    }
 
     private void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException
     {
@@ -234,52 +217,34 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
         String slug = repository.getSlug();
         
-        String ciServerList = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug);
-        if (pluginSettings.get(ciServerList) != null){
-            String[] serverList = ((String)pluginSettings.get(ciServerList)).split(",");
-            for (int i = 0; i < serverList.length; i++) {
-                serverList[i] = serverList[i].trim();
-            }
-            context.put("jenkinsCIServerList", serverList);
+        context.put("jenkinsCIServerList", PluginSettingsHelper.getJenkinsCIServerList(slug, pluginSettings));
+        
+        try {
+            context.put("jenkinsUserName",new String(PluginSettingsHelper.getUsername(slug, pluginSettings)));
+        } catch (DecryptException e) {
+            log.error("Not able to decrypt the username, will reset the field. You will have to re-enter username",e);
+            context.put("jenkinsUserName","");
         }
         
-        String usernameKey = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug);
-        if (pluginSettings.get(usernameKey) != null){
-            try {
-                context.put("jenkinsUserName",new String(PluginSettingsHelper.getUsername(slug, pluginSettings)));
-            } catch (DecryptException e) {
-                log.error("Not able to decrypt the username, will reset the field. You will have to re-enter username",e);
-                context.put("jenkinsUserName","");
-            }
+        try {
+            context.put("jenkinsPassword", new String(PluginSettingsHelper.getPassword(slug, pluginSettings)));
+        } catch (DecryptException e) {
+            log.error("Not able to decrypt the password, will reset the field. You will have to re-enter password",e);
+            context.put("jenkinsPassword","");
         }
         
-        String passwordKey = PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug);
-        if (pluginSettings.get(passwordKey) != null){
-            try {
-                context.put("jenkinsPassword", new String(PluginSettingsHelper.getPassword(slug, pluginSettings)));
-            } catch (DecryptException e) {
-                log.error("Not able to decrypt the password, will reset the field. You will have to re-enter password",e);
-                context.put("jenkinsPassword","");
-            }
-        }
+        context.put("buildRefField", PluginSettingsHelper.getBuildReferenceField(slug, pluginSettings));
+        context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
         
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug)) != null){
-            context.put("buildRefField", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug)));
-        }
-        
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug)) != null){
-            context.put("buildTitleField", pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug)));
-        }
-        
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug)) != null){
+        if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){
             context.put("triggerBuildOnCreate", "checked=\"checked\"");
         } 
         
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug)) != null){
+        if (PluginSettingsHelper.isTriggerBuildOnUpdate(slug, pluginSettings)){
             context.put("triggerBuildOnUpdate", "checked=\"checked\"");
         } 
         
-        if (pluginSettings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug)) != null){
+        if (PluginSettingsHelper.isTriggerBuildOnReopen(slug, pluginSettings)){
             context.put("triggerBuildOnReopen", "checked=\"checked\"");
         } 
         
