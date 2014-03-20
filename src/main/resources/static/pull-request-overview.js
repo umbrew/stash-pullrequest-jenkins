@@ -9,17 +9,23 @@
         return 'stash.plugin.jenkins.settingsui.' + proj.key + '/' + repo.slug + '/' + pullRequestJson.id;
     }
     
-    function getServletUrl(pullRequestJson) {
+    function getSettingsServletUrl(pullRequestJson) {
 		var baseUrl = AJS.contextPath();
     	var repo = pullRequestJson.toRef.repository;
         var proj = repo.project;
-        return baseUrl+'/plugins/servlet/jenkins/repository/' + proj.key + '/' + repo.slug;
+        return baseUrl+'/plugins/servlet/jenkins/settings/' + proj.key + '/' + repo.slug;
+    }
+    
+    function getManualTriggerServletUrl(pullRequestJson) {
+		var baseUrl = AJS.contextPath();
+    	var repo = pullRequestJson.toRef.repository;
+        return baseUrl+'/plugins/servlet/jenkins/manualtrigger/' + repo.id + '/' + repo.slug;
     }
     
     var storage = { getCheckBoxStatus : function(pullRequestJson) {
              AJS.$.ajax({
 	          type: "GET",
-	          url: getServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
+	          url: getSettingsServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
 	          success: function(data) {
 							var checkBox = $('#disablecheckbox_id');
 					        if (data != null && data.length > 0) {
@@ -33,10 +39,15 @@
         addCheckBoxStatus : function(pullRequestJson, disableBuild) {
 	         AJS.$.ajax({
 	          type: "POST",
-	          url: getServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
+	          url: getSettingsServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
 	          data: {disableBuildParameter : disableBuild}
 	          });
-        }
+        },
+        triggerBuild : function(pullRequestJson) {
+	         AJS.$.ajax({
+	          type: "POST",
+	          url: getManualTriggerServletUrl(pullRequestJson)+'/'+pullRequestJson.id});
+       }
     };
 
     // Stash 2.4.x and 2.5.x incorrectly provided a Brace/Backbone model here, but should have provided raw JSON.
@@ -48,6 +59,10 @@
         storage.addCheckBoxStatus(pullRequestJson, disableBuild);
     }
     
+    function triggerBuild(pullRequestJson) {
+        storage.triggerBuild(pullRequestJson);
+    }
+    
 	function setDisableAutomaticCheckboxOnLoad() {
 	   var pr = require('model/page-state').getPullRequest();
 	   storage.getCheckBoxStatus(coerceToJson(pr));
@@ -56,6 +71,7 @@
 
     PULLREQUEST.setCheckboxStatus = setCheckboxStatus;
     PULLREQUEST.setDisableAutomaticCheckboxOnLoad = setDisableAutomaticCheckboxOnLoad;
+    PULLREQUEST.triggerBuild = triggerBuild;
     
     /* Expose the client-condition function */
     PULLREQUEST._pullRequestIsOpen = function(context) {
@@ -70,7 +86,6 @@
 	    }
 	    
 	     $("#disablecheckbox_id").unbind("click").click(function(e) {
-	        var pr = require('model/page-state').getPullRequest();
 			if($('#disablecheckbox_id').is(":checked")) {
 			  PULLREQUEST.setCheckboxStatus(coerceToJson(pr), "checked");
 			} else {
@@ -78,6 +93,11 @@
 			}
 			return;
 	    });
+	     
+	     $("#triggerbuild_id").unbind("click").click(function(e) {
+			PULLREQUEST.triggerBuild(coerceToJson(pr));
+			return;
+		  });
     });
    
 }(AJS.$));

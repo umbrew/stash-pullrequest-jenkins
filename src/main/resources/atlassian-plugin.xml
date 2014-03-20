@@ -5,8 +5,10 @@
         <description>${project.description}</description>
         <version>${project.version}</version>
         <vendor name="${project.organization.name}" url="${project.organization.url}"/>
+        <param name="atlassian-licensing-enabled">false</param>
     </plugin-info>
 
+    
  	<component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
     <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
     <component-import key="repositoryService" interface="com.atlassian.stash.repository.RepositoryService"/>
@@ -14,11 +16,19 @@
     <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
         
-    <component key="PullRequest" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsTriggerJobIntergration"/>
+    <component key="JenkinsIntergration" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger" public="true">
+        <interface>com.harms.stash.plugin.jenkins.job.intergration.JobTrigger</interface>
+    </component>
+    <component key="stashEventListener" class="com.harms.stash.plugin.jenkins.job.intergration.StashEventListener"/>
 
-	<servlet name="Repository Servlet" key="repository-servlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.JenkinsIntegrationPluginSettingsServlet">
-        <description key="repository-servlet.description">The Repository Servlet Plugin</description>
-        <url-pattern>/jenkins/repository/*</url-pattern>
+	<servlet name="SettingsServlet" key="settingsServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.JenkinsIntegrationPluginSettingsServlet">
+        <description key="settingsServlet.description">The Jenkins plug-in Settings Servlet</description>
+        <url-pattern>/jenkins/settings/*</url-pattern>
+    </servlet>
+    
+    <servlet name="ManualTriggerBuildServlet" key="manualTriggerBuildServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuild">
+        <description key="manualTriggerBuildServlet.description">The manual trigger job Servlet</description>
+        <url-pattern>/jenkins/manualtrigger/*</url-pattern>
     </servlet>
 
 	<stash-resource key="setting-soy" name="Jenkins Pull Request Integration Templates">
@@ -42,16 +52,16 @@
     </web-resource>
 
     <client-web-panel key="disable-automatic-build" location="stash.pull-request.links">
-        <resource name="view" type="soy" location="org.harms.stash.jenkins-integration-plugin:pr-overview-resources/stash.config.jenkins.job.integration.disableAutomaticBuildForm" />
+        <resource name="view" type="soy" location="com.harms.stash.jenkins-integration-plugin:pr-overview-resources/stash.config.jenkins.job.integration.disableAutomaticBuildForm" />
 		<resource type="download" name="pull-request-overview.js" location="/static/pull-request-overview.js"/>
         <client-condition>PULLREQUEST._pullRequestIsOpen</client-condition>
     </client-web-panel>
     
-    <web-item key="repository-settings-plugin-tab" name="Repository settings navigation tab"
+    <web-item key="jenkins-settings-plugin-tab" name="Jenkins settings navigation tab"
               section="stash.repository.settings.panel/repository-settings-section" weight="50">
         <label>Jenkins Pull Request integration</label>
-        <link>/plugins/servlet/jenkins/repository/${repository.project.key}/${repository.slug}/</link>
+        <link>/plugins/servlet/jenkins/settings/${repository.project.key}/${repository.slug}/</link>
         <tooltip>Automatic trigger a Jenkins job when a pull request is created or updated</tooltip>
     </web-item>
-    
+    <component-import key="pluginLicenseManager" interface="com.atlassian.upm.api.license.PluginLicenseManager"/>
 </atlassian-plugin>

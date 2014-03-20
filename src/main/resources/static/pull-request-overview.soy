@@ -4,8 +4,15 @@
  *
  */
 {template .disableAutomaticBuildForm}
-    <form class="aui" id="disable-build">
-        <input class="disablecheckbox" type="checkbox" id="disablecheckbox_id" name="disableAutomaticBuild">
-    	<label>Disable automatic build</label>
-    </form>
+	<div class="plugin-item">
+	    <form class="aui" id="disable-build">
+	    	<div class="plugin-item">
+	        <input class="disablecheckbox" type="checkbox" id="disablecheckbox_id" name="disableAutomaticBuild">
+	    	<label>Disable automatic build</label>
+	    	</div>
+	    	<div class="plugin-item">
+	    	<button class="aui-button" id="triggerbuild_id">Build</button>
+	    	</div>
+	    </form>
+    </div>
 {/template}
