@@ -71,7 +71,7 @@ public class PluginSettingsHelper {
      * @return true if the automatic build is disabled
      */
     public static boolean isAutomaticBuildDisabled(String projectKey, String slug, Long pullRequestId,PluginSettings settings) {
-        return (CHECKED.equals(PluginSettingsHelper.getDisableAutomaticBuildSettingsKey(projectKey,slug,pullRequestId)));
+        return (CHECKED.equals(settings.get(PluginSettingsHelper.getDisableAutomaticBuildSettingsKey(projectKey,slug,pullRequestId))));
     }
     
     /**
