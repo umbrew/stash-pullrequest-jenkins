@@ -3,12 +3,23 @@ package com.harms.stash.plugin.jenkins.job.settings;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
+import com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuildServlet;
 
 
 public class PluginSettingsHelper {
+    private static final Logger log = LoggerFactory.getLogger(ManualTriggerBuildServlet.class);
+    
     private static final String CHECKED = "checked";
     public static final String PLUGIN_STORAGE_KEY = "stash.plugin.jenkins.settingsui";
     public static final String BUILD_TITLE_FIELD = PLUGIN_STORAGE_KEY + ".buildTitleField";
@@ -22,8 +33,11 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
     
+    private static final String BUILD_DELAY_FIELD = PLUGIN_STORAGE_KEY + ".buildDelayField";
+    
     public static final String PLUGIN_VERISON = PLUGIN_STORAGE_KEY + ".pluginVersion";
     
+    private static Map<String, Calendar> jobScheduleDate = new ConcurrentHashMap<String, Calendar>();
     
     /**
      * Return the pull-request settings key. 
@@ -218,6 +232,27 @@ public class PluginSettingsHelper {
     }
     
     /**
+     * Return the build trigger delay from on the settings. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static Integer getBuildDelay(String slug, PluginSettings settings) {
+        Integer buildDelayField = Integer.valueOf((String)settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug)));
+        return buildDelayField == null  ? 0 : buildDelayField;
+    }
+    
+    /**
+     * Set the build trigger delay on the settings. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param buildDelay
+     * @param settings
+     */
+    public static void setBuildDelay(String slug, Integer buildDelay, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug), buildDelay.toString());
+    }
+    
+    /**
      * Set the name of the build titel field on the settings. This point to a parameter on the Jenkins Job
      * @param slug
      * @param buildTitle
@@ -332,4 +367,62 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug));
     }
     
+    /**
+     * Generate schedule time for when the build should be triggered
+     * @param slug
+     * @param plugin settings
+     * @param pullRequest - the pull request the schedule date should be calculated for
+     * @return {@link Date}
+     */
+    public static Date generateScheduleJobTime(String slug, PluginSettings settings, Long pullRequestId) {
+       return setScheduleJobTime(slug, settings, pullRequestId, getBuildDelay(slug, settings));
+    }
+    
+    /**
+     * Return a schedule date time based on the specified delay in seconds
+     * @param slug
+     * @param settings - plug-in settings
+     * @param pullRequestId - the pull request the schedule date should be calculated for
+     * @param delay - the delay in seconds
+     * @return {@link Date}
+     */
+    public static Date setScheduleJobTime(String slug, PluginSettings settings, Long pullRequestId, Integer delay) {
+        String jobKey = getScheduleJobKey(slug,pullRequestId);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, delay);
+        jobScheduleDate.put(jobKey, calendar);
+        
+        if (log.isDebugEnabled()) {
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+            log.debug(String.format("Calculated execution time %s for job %s",sdf.format(calendar.getTime()),jobKey));
+        }
+        return calendar.getTime(); 
+    }
+    
+    /**
+     * Return the registered job time for the specified job 
+     * @param jobId
+     * @return
+     */
+    public static Calendar getScheduleJobTime(String jobId) {
+        return jobScheduleDate.get(jobId);
+    }
+    /**
+     * Return the job schedule key calculated based on the pull-request id
+     * @param slug
+     * @param pullRequestId
+     * @return
+     */
+    public static String getScheduleJobKey(String slug, Long pullRequestId) {
+       return slug+"."+pullRequestId;
+    }
+    
+    /**
+     * Remove the last job schedule time
+     * @param jobKey
+     */
+    public static void resetScheduleTime(String jobKey) {
+        log.debug("Remove registered job trigger time with key "+jobKey);
+        jobScheduleDate.remove(jobKey);
+    }
 }

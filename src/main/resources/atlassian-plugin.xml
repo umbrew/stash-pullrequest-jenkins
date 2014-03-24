@@ -7,7 +7,6 @@
         <vendor name="${project.organization.name}" url="${project.organization.url}"/>
         <param name="atlassian-licensing-enabled">false</param>
     </plugin-info>
-
     
  	<component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
     <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
@@ -15,7 +14,9 @@
     <component-import key="pullRequestService" interface="com.atlassian.stash.pull.PullRequestService"/>
     <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
-        
+    <component-import key="pluginScheduler" interface="com.atlassian.sal.api.scheduling.PluginScheduler"/>
+    <component-import key="securityService" interface="com.atlassian.stash.user.SecurityService"/>
+    
     <component key="JenkinsIntergration" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.intergration.JobTrigger</interface>
     </component>
@@ -26,9 +27,14 @@
         <url-pattern>/jenkins/settings/*</url-pattern>
     </servlet>
     
-    <servlet name="ManualTriggerBuildServlet" key="manualTriggerBuildServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuild">
+    <servlet name="ManualTriggerBuildServlet" key="manualTriggerBuildServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuildServlet">
         <description key="manualTriggerBuildServlet.description">The manual trigger job Servlet</description>
         <url-pattern>/jenkins/manualtrigger/*</url-pattern>
+    </servlet>
+    
+    <servlet name="ScheduledJobTriggerInfoServlet" key="scheduledJobTriggerInfoServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ScheduledJobTriggerInfoServlet">
+        <description key="scheduledJobTriggerInfoServlet.description">Retrieve registered schedule job trigger for a pull-request</description>
+        <url-pattern>/jenkins/scheduledtriggers/*</url-pattern>
     </servlet>
 
 	<stash-resource key="setting-soy" name="Jenkins Pull Request Integration Templates">
@@ -55,6 +61,15 @@
         <resource name="view" type="soy" location="com.harms.stash.jenkins-integration-plugin:pr-overview-resources/stash.config.jenkins.job.integration.disableAutomaticBuildForm" />
 		<resource type="download" name="pull-request-overview.js" location="/static/pull-request-overview.js"/>
         <client-condition>PULLREQUEST._pullRequestIsOpen</client-condition>
+    </client-web-panel>
+    
+    <web-panel key="schedule-job-trigger-message" location="stash.notification.banner.header">
+        <resource name="view" type="static"><![CDATA[<div id="schedule-job-trigger-message"></div><div id="disable-automatic-build-message"></div>]]></resource>
+    </web-panel>
+
+    <client-web-panel key="scheduled-job-trigger" location="stash.pull-request.links">
+        <resource type="download" name="scheduled-job-trigger.js" location="/static/scheduled-job-trigger.js"/>
+        <client-condition>JOBTRIGGER._pullRequestIsOpen</client-condition>
     </client-web-panel>
     
     <web-item key="jenkins-settings-plugin-tab" name="Jenkins settings navigation tab"

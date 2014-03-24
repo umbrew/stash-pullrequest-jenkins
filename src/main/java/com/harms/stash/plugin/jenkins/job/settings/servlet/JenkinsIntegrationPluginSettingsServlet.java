@@ -27,6 +27,7 @@ import com.harms.stash.plugin.jenkins.job.settings.upgrade.UpgradeService;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_1;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_3;
+import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_5;
 
 public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private static final long serialVersionUID = -1645440333554544743L;
@@ -64,6 +65,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         }
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         log.debug("Invoke JenkinsIntegrationPluginSettingsServlet");
@@ -108,6 +110,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         }
         
         PluginSettingsHelper.setBuildReferenceField(slug, parameterMap.get("buildRefField")[0], ps);
+        PluginSettingsHelper.setBuildDelay(slug, new Integer(parameterMap.get("buildDelayField")[0]), ps);
         
         if (parameterMap.containsKey("triggerBuildOnCreate")) {
             PluginSettingsHelper.enableTriggerOnCreate(slug, ps);
@@ -179,7 +182,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         
         if (components.length == 4) {
             //handle settings for a pull-request
-            String readPullRequestSettings = readPullRequestSettings(resp, components[3], repository);
+            String readPullRequestSettings = readPullRequestSettings(resp, new Long(components[3]), repository);
             if (readPullRequestSettings != null) {
                 resp.setContentType("text/plain");
                 resp.getWriter().print(readPullRequestSettings);
@@ -204,13 +207,13 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         upgradeService.addUpgradeStep(new Upgrade_1_0_1(repository.getSlug()));
         upgradeService.addUpgradeStep(new Upgrade_1_0_2(repository.getSlug()));
         upgradeService.addUpgradeStep(new Upgrade_1_0_3(repository.getSlug()));
+        upgradeService.addUpgradeStep(new Upgrade_1_0_5(repository.getSlug()));
         upgradeService.process(); //if the upgrade is already executed this will just return
     }
 
-    private String readPullRequestSettings(HttpServletResponse resp, String pullRequestId, Repository repository) throws IOException {
+    private String readPullRequestSettings(HttpServletResponse resp, Long pullRequestId, Repository repository) throws IOException {
         PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
-        String key = "stash.plugin.jenkins.settingsui." + repository.getProject().getKey() + "/" + repository.getSlug()+ "/" +pullRequestId;
-        return (String) pluginSettings.get(key);
+        return PluginSettingsHelper.isAutomaticBuildDisabled(repository.getProject().getKey(), repository.getSlug(), pullRequestId, pluginSettings) ? "CHECKED":"";
     }
 
     private void readPluginSettings(Repository repository, Map<String, Object> context) {
@@ -234,6 +237,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         }
         
         context.put("buildRefField", PluginSettingsHelper.getBuildReferenceField(slug, pluginSettings));
+        context.put("buildDelayField", PluginSettingsHelper.getBuildDelay(slug, pluginSettings).toString());
         context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
         
         if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){

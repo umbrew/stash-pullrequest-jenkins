@@ -1,3 +1,4 @@
+var pageInitialized = false;
 (function($) {
     // Set up our namespace
     window.PULLREQUEST = window.PULLREQUEST || {};
@@ -30,6 +31,10 @@
 							var checkBox = $('#disablecheckbox_id');
 					        if (data != null && data.length > 0) {
 					        	checkBox.attr('checked', true);
+					        	AJS.messages.generic("#disable-automatic-build-message",{
+					        		   title:"The automatic build trigger is disabled!",
+					        		   fadeout:true
+					        	});
 					        } else {
 					        	checkBox.attr('checked', false);
 					        };
@@ -37,16 +42,28 @@
 	          });
         },
         addCheckBoxStatus : function(pullRequestJson, disableBuild) {
+        	 var disableMsgStatus = "enabled!";
+        	 if (disableBuild == 'checked') {
+        		 disableMsgStatus = "disabled!";
+        	 } 
 	         AJS.$.ajax({
 	          type: "POST",
 	          url: getSettingsServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
 	          data: {disableBuildParameter : disableBuild}
 	          });
+	         AJS.messages.generic("#disable-automatic-build-message",{
+      		   title:"The automatic build trigger is "+disableMsgStatus,
+      		   fadeout:true
+      	});
         },
         triggerBuild : function(pullRequestJson) {
 	         AJS.$.ajax({
 	          type: "POST",
 	          url: getManualTriggerServletUrl(pullRequestJson)+'/'+pullRequestJson.id});
+	         AJS.messages.generic("#schedule-job-trigger-message",{
+      		   title:"Trigger Jenkins job for pull-request!",
+      		   fadeout:true
+      	});
        }
     };
 
@@ -78,8 +95,10 @@
         var pr = coerceToJson(context['pullRequest']);
         return pr.state === 'OPEN';
     };
-
+    
 	$(document).ready(function(){
+		if(pageInitialized) return;
+	    pageInitialized = true;
 	    var pr = require('model/page-state').getPullRequest();
 	    if (coerceToJson(pr).state == 'OPEN') {
 	       PULLREQUEST.setDisableAutomaticCheckboxOnLoad();

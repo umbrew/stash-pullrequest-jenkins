@@ -1,11 +1,16 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.event.api.EventListener;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
+import com.atlassian.sal.api.scheduling.PluginScheduler;
+import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.stash.event.pull.PullRequestDeclinedEvent;
 import com.atlassian.stash.event.pull.PullRequestEvent;
 import com.atlassian.stash.event.pull.PullRequestMergedEvent;
@@ -14,6 +19,7 @@ import com.atlassian.stash.event.pull.PullRequestReopenedEvent;
 import com.atlassian.stash.event.pull.PullRequestRescopedEvent;
 import com.atlassian.stash.pull.PullRequest;
 import com.atlassian.stash.repository.Repository;
+import com.atlassian.stash.user.SecurityService;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 public class StashEventListener {
@@ -22,10 +28,16 @@ public class StashEventListener {
     
     private final JobTrigger jenkinsCI;
     private final PluginSettings settings;
+    private final PluginScheduler pluginScheduler;
+    private final UserManager userManager;
+    private final SecurityService securityService;
     
-    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration) {
+    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration, PluginScheduler pluginScheduler,UserManager userManager,SecurityService securityService) {
+        this.pluginScheduler = pluginScheduler;
         this.settings = pluginSettingsFactory.createGlobalSettings();
         this.jenkinsCI = jenkinsCiIntergration;
+        this.userManager = userManager;
+        this.securityService = securityService;
     }
     
     /**
@@ -43,17 +55,15 @@ public class StashEventListener {
         return eventType;
     }
     
+    
     @EventListener
     public void openPullRequest(PullRequestOpenedEvent pushEvent)
     {
         PullRequestData prd = new PullRequestData(pushEvent.getPullRequest());
-        int retryCount = 0;
         
-        String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
         boolean triggerBuildOnCreate = PluginSettingsHelper.isTriggerBuildOnCreate(prd.slug,settings);
-        if ((triggerBuildOnCreate) && jenkinsCI.validateSettings(jenkinsBaseUrl,prd.slug)) {
-            TriggerRequestEvent eventType = getTriggerEventType(pushEvent);
-            jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, retryCount,jenkinsBaseUrl);
+        if (triggerBuildOnCreate) {
+            scheduleJobTrigger(pushEvent, prd);
         }
     }
     
@@ -61,39 +71,39 @@ public class StashEventListener {
     public void updatePullRequest(PullRequestRescopedEvent pushEvent)
     {
         PullRequestData prd = new PullRequestData(pushEvent.getPullRequest());
-        int retryCount = 0;
-        String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
         
         boolean isSourceChanged = !pushEvent.getPullRequest().getFromRef().getLatestChangeset().equals(pushEvent.getPreviousFromHash());
         boolean automaticBuildDisabled = PluginSettingsHelper.isAutomaticBuildDisabled(prd.projectKey,prd.slug,prd.pullRequestId,settings);
         
         boolean triggerBuildOnUpdate = PluginSettingsHelper.isTriggerBuildOnUpdate(prd.slug,settings);
-        if ((triggerBuildOnUpdate) && (!automaticBuildDisabled) && (jenkinsCI.validateSettings(jenkinsBaseUrl,prd.slug)) && (isSourceChanged)) {
-            TriggerRequestEvent eventType = getTriggerEventType(pushEvent);
-            jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, retryCount,jenkinsBaseUrl);
-  
+        if ((triggerBuildOnUpdate) && (!automaticBuildDisabled) && (isSourceChanged)) {
+            scheduleJobTrigger(pushEvent, prd);
         }
     }
-    
+
     @EventListener
     public void reopenPullRequest(PullRequestReopenedEvent pushEvent)
     {
         PullRequestData prd = new PullRequestData(pushEvent.getPullRequest());
-        int retryCount = 0;
         
-        String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
         boolean automaticBuildDisabled = PluginSettingsHelper.isAutomaticBuildDisabled(prd.projectKey,prd.slug,prd.pullRequestId,settings);
         
         boolean triggerBuildOnReopen = PluginSettingsHelper.isTriggerBuildOnReopen(prd.slug,settings);
         if (triggerBuildOnReopen && !automaticBuildDisabled) {
-            TriggerRequestEvent eventType = getTriggerEventType(pushEvent);
-            jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, retryCount,jenkinsBaseUrl);
- 
-            
+            scheduleJobTrigger(pushEvent, prd);
         }
     }
-    
-    
+
+    /**
+     * Schedule a job trigger if a job is not already scheduled.
+     * @param pushEvent
+     * @param prd
+     */
+    private void scheduleJobTrigger(PullRequestEvent pushEvent, PullRequestData prd) {
+        if (PluginSettingsHelper.getScheduleJobTime(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId)) == null) {
+            pluginScheduler.scheduleJob(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId), JenkinsJobScheduler.class, createJobData(pushEvent), PluginSettingsHelper.generateScheduleJobTime(prd.slug, settings, prd.pullRequestId), 0);
+        }
+    }
     
     /**
      * Remove the disable automatic build settins when the pull-request is merged or declined
@@ -117,5 +127,15 @@ public class StashEventListener {
     {
         //make sure we clean up the disable automatic property 
         removeDisableAutomaticBuildProperty(pushEvent);
+    }
+    
+    private Map<String, Object> createJobData(PullRequestEvent pushEvent) {
+        Map<String, Object> jobDataMap = new HashMap<String, Object>();
+        jobDataMap.put(JenkinsJobTrigger.class.getName(), jenkinsCI);
+        jobDataMap.put(PullRequest.class.getName(), pushEvent.getPullRequest());
+        jobDataMap.put(TriggerRequestEvent.class.getName(), getTriggerEventType(pushEvent));
+        jobDataMap.put("UserName",userManager.getRemoteUser().getUsername());
+        jobDataMap.put(SecurityService.class.getName(),securityService);
+        return jobDataMap;
     }
 }
