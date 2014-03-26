@@ -233,13 +233,14 @@ public class PluginSettingsHelper {
     
     /**
      * Return the build trigger delay from on the settings. This point to a parameter on the Jenkins Job
+     * if no previous value is specified it will default to 300 seconds
      * @param slug
      * @param settings
      * @return
      */
     public static Integer getBuildDelay(String slug, PluginSettings settings) {
         Integer buildDelayField = Integer.valueOf((String)settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug)));
-        return buildDelayField == null  ? 0 : buildDelayField;
+        return buildDelayField == null  ? 300 : buildDelayField;
     }
     
     /**

@@ -22,7 +22,7 @@ public class Upgrade_1_0_5 implements Upgrade {
     }
     @Override
     public void perform(PluginSettings ps) {
-        PluginSettingsHelper.setBuildDelay(slug, 0, ps);
+        PluginSettingsHelper.setBuildDelay(slug, PluginSettingsHelper.getBuildDelay(slug, ps), ps);
         log.info("Upgrade build delay field for supporting delayed build");
     }
 
