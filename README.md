@@ -2,16 +2,20 @@
 
 This started as a project "how difficult could it be" to create a integration between Stash and Jenkins CI. 
 So I decided to build a small plugin for Stash inspired by all the examples provided by Atlassian, 
-it's still working progress and it only tested with Stash 2.8.2 and Jenkins CI 1.509.2
+it's still working progress and it only tested with Stash 2.10.1 and Jenkins CI 1.509.2
 
 This stash plugin hook into create/update/reopen pull-request to trigger a build on Jenkins CI through the API. 
 3 hooks listing on events "PullRequestOpenedEvent", "PullRequestRescopedEvent" and "PullRequestReopenedEvent" and 
-when a event is triggered it trigger the specified jenklins job with parameter of the SHA-1 of the source repository
+when a event is triggered it trigger the specified jenklins job with parameter of the SHA-1 commit id of the source repository
 
 The Jenkins job need to take a least one parameter containing the source "SHA-1", this can be used to checkout 
 the changed source set and process the job to your specific needs.
 
-This plug-in is created under the philosophy of open source that software should be free and accessible to all. 
+The "Disable automatic build" checkbox on the pull-request allow you to disable any trigger updates for the pull-request. This is useful if you have a pull-request that is updated often and you want to control when it should trigger a build.
+
+The "Build" button on the pull-request allow you to force a immediately build of the pull-request. This can be used in combination with "Disable automatic build" to manual control when it should be build
+
+This plug-in is created under the philosophy of open source that software should be free and accessible to all.
 
 ##  Installation
 For installing the plug-in you need to open the "Administration" -> "Manage Add-ons" in Stash. Choose "Upload-add-on" and choose the
@@ -25,8 +29,9 @@ Go to your repository and choose "settings" -> "Jenkins Pull Request integration
 * "Url" - the base URL pointing to the job http://ci-server:8082/job/Single-Revision-Build/
 * "Username" - if jenkins require authentication
 * "Password" - if jenkins require authentication
-* "Build ref. field" - The name of job parameter the source SHA-1 should be set on when a build is triggered
+* "Build ref. field" - The name of job parameter the source SHA-1 should be inserted in when a build is triggered
 * "Build title field" - This is optional and the name of the job parameter the pull-request title should be set on when a build is triggered.
+* "Delay build" - This is by default 300 seconds (5 min) and will deplay the trigger of the build. Useful if have a process where you update the pull-request often
  
 ##  Building the source
 For building the source it's required you install the [Atlassian Plugin SDK](https://developer.atlassian.com/display/DOCS/Set+up+the+Atlassian+Plugin+SDK+and+Build+a+Project) The easiest way is to follow the link
@@ -48,18 +53,17 @@ with the password.
 Support for simple load balancing against multiple CI servers. The only requirement is that all servers share the same user and API token.
 If one CI server fail to process the request it will try the next in the list until tried every server.
 
+- Disable the feature it posted the job URL as part of the comment because it will point to the wrong job in most cases 
+
 ##  Upgrade from 1.0.3 to 1.0.4
 - Added support for trigger a build manual from the pull-reques.
 - Tested with stash 2.10.1.
 - Fixed an issue with the list of build servers contains white spaces when it was loaded.
 
-
-
-Updated [01-03-2014]
-
-* Add support for simple load balancing. 
-* Disable the feature it posted the job URL as part of the comment because it will point to the wrong job in most cases 
-
+##  Upgrade from 1.0.4 to 1.0.5
+- Added support for delay the trigger of a build
+- The "build" button will unschedule the current build if any and force a new build immediately
+ 
 Updated [02-01-2014]
 
 * Fixed an issue with null point when computing the encryption key. 

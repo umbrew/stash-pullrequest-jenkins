@@ -7,6 +7,7 @@
  * @param jenkinsPassword Jenkins password
  * @param buildRefField Build reference field
  * @param buildTitleField Build Title field
+ * @param buildDelayField Build Delay field
  * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
@@ -82,6 +83,12 @@
             <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
             <div class="description">Build title field</div>
         </div>
+        
+         <div class="field-group">
+            <label for="buildDelay">Delay build</label>
+            <input class="text" type="text" id="buildDealyField" name="buildDelayField" title="Build delay field" value="{$buildDelayField}">
+            <div class="description">Enter value in seconds for delaying the build when the pull-request is open,reopen, update</div>
+        </div>
         <input class="text" type="hidden" id="repository.slug" name="repository.slug" value="{$repository.slug}">
     </fieldset>
 
@@ -136,6 +143,13 @@
 					    AJS.messages.warning({
 					       title: "Mandatory Field",
 					       body: "The field \"Build ref. field\" require a value."
+					    });
+					   }
+					   if (AJS.$isNumeric(AJS.$("#buildDelayField").val())) {
+					    e.preventDefault();
+					    AJS.messages.warning({
+					       title: "Mandatory Field",
+					       body: "The field \"Build Delay field\" require a value 0 or higher."
 					    });
 					   }
 					   if (AJS.$("#_jenkinsCIServerList option").size() == 0) {
