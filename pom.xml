@@ -162,6 +162,12 @@
 				<artifactId>yuicompressor-maven-plugin</artifactId>
 				<version>0.7.1</version>
 			</plugin>
+			<plugin>
+				<groupId>com.atlassian.maven.plugins</groupId>
+				<artifactId>maven-amps-plugin</artifactId>
+				<version>${amps.version}</version>
+				<extensions>true</extensions>
+			 </plugin>
 		</plugins>
 	</build>
 	<properties>
