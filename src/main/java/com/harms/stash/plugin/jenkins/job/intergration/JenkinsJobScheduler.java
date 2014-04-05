@@ -58,7 +58,7 @@ public class JenkinsJobScheduler implements PluginJob {
             String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
             if (jenkinsCI.validateSettings(jenkinsBaseUrl,prd.slug)) {
                 log.debug(String.format("trigger build with parameter (%s, %s, %s, %s, %s, %s,%s",prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType,jenkinsBaseUrl));
-                jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl);
+                jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl, prd.projectKey);
             } else {
                 log.warn("Jenkins base URL & Build reference field is missing, please add the information in the pull-in settings");
             }

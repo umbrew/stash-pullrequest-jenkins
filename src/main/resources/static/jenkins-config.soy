@@ -11,6 +11,7 @@
  * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
+ * @param buildPullRequestUrlField Pull-request URL field
  */
 {template .repositorySettings}
 <html>
@@ -82,6 +83,12 @@
             <label for="buildTitleField">Build title field</label>
             <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
             <div class="description">Build title field</div>
+        </div>
+        
+        <div class="field-group">
+            <label for="buildTitleField">Pull-Request URL field</label>
+            <input class="text" type="text" id="buildPullRequestUrlField" name="buildPullRequestUrlField" title="Pull-request URL field" value="{$buildPullRequestUrlField}">
+            <div class="description">Pull-request URL field, add the name of the job parameter that should contain the URL of the pull-request</div>
         </div>
         
          <div class="field-group">

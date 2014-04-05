@@ -28,6 +28,8 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.plugin.webresource.UrlMode;
+import com.atlassian.plugin.webresource.WebResourceUrlProvider;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.stash.pull.PullRequestService;
@@ -38,11 +40,14 @@ final public class JenkinsJobTrigger implements JobTrigger {
     
     private final PullRequestService pullRequestService;
     private final PluginSettings settings;
+    private final WebResourceUrlProvider webResourceUrlProvider;
 
     private volatile String[] serverList;
 
-	public JenkinsJobTrigger(PullRequestService pullRequestService, PluginSettingsFactory pluginSettingsFactory) {
+
+	public JenkinsJobTrigger(PullRequestService pullRequestService, PluginSettingsFactory pluginSettingsFactory, WebResourceUrlProvider webResourceUrlProvider) {
 		this.pullRequestService = pullRequestService;
+        this.webResourceUrlProvider = webResourceUrlProvider;
         this.settings = pluginSettingsFactory.createGlobalSettings();
 	}	
 	
@@ -88,19 +93,19 @@ final public class JenkinsJobTrigger implements JobTrigger {
      * @see com.harms.stash.plugin.jenkins.job.intergration.TriggerJobIntergration#triggerBuild(java.lang.Integer, java.lang.String, java.lang.Long, java.lang.String, java.lang.String, com.harms.stash.plugin.jenkins.job.intergration.TriggerRequestEvent, int, java.lang.String)
      */
     @Override
-    public void triggerBuild(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, TriggerRequestEvent eventType, int retryCount, String baseUrl) {
+    public void triggerBuild(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, TriggerRequestEvent eventType, int retryCount, String baseUrl, String projectKey) {
         String url = "";
         HttpResponse response = null;
 
         try {
-            url = buildJenkinsUrl(latestChangeset, pullRequestId,pullRequestTitle,slug, baseUrl);
+            url = buildJenkinsUrl(latestChangeset, pullRequestId,pullRequestTitle,slug, baseUrl, projectKey);
             HttpPost post = new HttpPost(url);
             byte[] userName = PluginSettingsHelper.getUsername(slug, settings);
             byte[] password = PluginSettingsHelper.getPassword(slug, settings);
             response = httpClientRequest(post, userName, password);
             EntityUtils.consume(response.getEntity());
         } catch (Exception e) {
-            if (!retryTriggerJob(toRefRepositoryId,latestChangeset,pullRequestId,pullRequestTitle,slug,eventType, retryCount, url,-1,e.getMessage())) {
+            if (!retryTriggerJob(toRefRepositoryId,latestChangeset,pullRequestId,pullRequestTitle,slug,projectKey,eventType, retryCount, url,-1,e.getMessage())) {
                 addErrorComment(toRefRepositoryId, pullRequestId, String.format("Failed to trigger build %s\nException : %s",url,e.getMessage()));
                 throw new RuntimeException(e);
             }
@@ -108,7 +113,7 @@ final public class JenkinsJobTrigger implements JobTrigger {
             if (response != null) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode >= 400) {
-                    if (!retryTriggerJob(toRefRepositoryId,latestChangeset,pullRequestId,pullRequestTitle,slug,eventType, retryCount, url, statusCode,"")) {
+                    if (!retryTriggerJob(toRefRepositoryId,latestChangeset,pullRequestId,pullRequestTitle,slug,projectKey,eventType, retryCount, url, statusCode,"")) {
                         addErrorComment(toRefRepositoryId, pullRequestId, String.format("All CI servers failed, no job is triggered",url));
                         throw new RuntimeException("All CI servers failed, no job is triggered\nFailed : HTTP error code : " + statusCode);
                     }
@@ -123,14 +128,14 @@ final public class JenkinsJobTrigger implements JobTrigger {
         }
     }
 
-    private boolean retryTriggerJob(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug,TriggerRequestEvent eventType, int retryCount, String url, int status, String errorText)  {
+    private boolean retryTriggerJob(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, String projectId, TriggerRequestEvent eventType, int retryCount, String url, int status, String errorText)  {
         String baseUrl;
         //try the next server in case of an error
         if (retryCount++ < serverList.length-1) {
             String comment = String.format("Try next CI server in the list, failed to call %s(%s)\n%s",url,status,errorText);
             addErrorComment(toRefRepositoryId, pullRequestId, comment);
             baseUrl = nextCIServer(slug);
-            triggerBuild(toRefRepositoryId,latestChangeset, pullRequestId, pullRequestTitle, slug, eventType, retryCount, baseUrl);
+            triggerBuild(toRefRepositoryId,latestChangeset, pullRequestId, pullRequestTitle, slug, eventType, retryCount, baseUrl, projectId);
             return true;
         }
         return false;
@@ -145,7 +150,7 @@ final public class JenkinsJobTrigger implements JobTrigger {
      * @return A correct formatted URL for trigger a Jenkins job
      * @throws UnsupportedEncodingException
      */
-    private String buildJenkinsUrl(String latestChanges,Long pullRequestId, String pullRequestTitle, String slug, String jenkinsBaseUrl) throws UnsupportedEncodingException {
+    private String buildJenkinsUrl(String latestChanges,Long pullRequestId, String pullRequestTitle, String slug, String jenkinsBaseUrl, String projectKey) throws UnsupportedEncodingException {
         String url;
         String buildRefField = PluginSettingsHelper.getBuildReferenceField(slug, settings);
         String refId = String.format("%s=%s", buildRefField, URLEncoder.encode(latestChanges, "utf-8"));
@@ -153,8 +158,12 @@ final public class JenkinsJobTrigger implements JobTrigger {
         String titleValue = URLEncoder.encode(String.format("pull-request #%s - %s", pullRequestId,pullRequestTitle, "utf-8"));
         String buildTitleField = PluginSettingsHelper.getBuildTitleField(slug, settings);
         String title = buildTitleField == null || buildTitleField.isEmpty() ? "" : String.format("&%s=%s", buildTitleField, titleValue);
+        
+        String pullRequestUrlValue = String.format("%s/projects/%s/repos/%s/pull-requests/%s",webResourceUrlProvider.getBaseUrl(UrlMode.ABSOLUTE),projectKey,slug,pullRequestId);
+        String buildPullRequestUrlField = PluginSettingsHelper.getPullRequestUrlFieldName(slug, settings);
+        String pullRequestUrl = buildPullRequestUrlField == null || buildPullRequestUrlField.isEmpty() ? "" : String.format("&%s=%s", buildPullRequestUrlField, pullRequestUrlValue);
 
-        url = jenkinsBaseUrl + "buildWithParameters?" + refId +title;
+        url = jenkinsBaseUrl + "buildWithParameters?" + refId +title + pullRequestUrl;
         return url.trim();
     }
 

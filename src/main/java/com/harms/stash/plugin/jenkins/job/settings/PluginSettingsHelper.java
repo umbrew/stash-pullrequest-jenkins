@@ -32,6 +32,7 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_CREATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnCreate";
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
+    private static final String JENKINS_PR_URL_FIELD = PLUGIN_STORAGE_KEY + ".jenkinsPRUrl";
     
     private static final String BUILD_DELAY_FIELD = PLUGIN_STORAGE_KEY + ".buildDelayField";
     
@@ -239,8 +240,11 @@ public class PluginSettingsHelper {
      * @return
      */
     public static Integer getBuildDelay(String slug, PluginSettings settings) {
-        Integer buildDelayField = Integer.valueOf((String)settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug)));
-        return buildDelayField == null  ? 300 : buildDelayField;
+        Integer buildDelayField = 300;
+        if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug)) != null) {
+            buildDelayField = Integer.valueOf((String)settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug)));
+        }
+        return buildDelayField;
     }
     
     /**
@@ -363,9 +367,13 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_LAST_CI_SERVER,slug));
     }
     
     /**
@@ -425,5 +433,30 @@ public class PluginSettingsHelper {
     public static void resetScheduleTime(String jobKey) {
         log.debug("Remove registered job trigger time with key "+jobKey);
         jobScheduleDate.remove(jobKey);
+    }
+    
+    /**
+     * Return the build pull-request field name. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getPullRequestUrlFieldName(String slug, PluginSettings settings) {
+        String prUrl = "";
+        if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug)) != null) {
+            prUrl = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug)); 
+        }
+        
+        return prUrl;
+    }
+    
+    /**
+     * Set the build pull-request field name. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param buildDelay
+     * @param settings
+     */
+    public static void setPullRequestUrlFieldName(String slug, String field, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug), field);
     }
 }
