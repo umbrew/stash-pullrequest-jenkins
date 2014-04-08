@@ -134,6 +134,10 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         if (!parameterMap.get("buildTitleField")[0].isEmpty()) {
             PluginSettingsHelper.setBuildTitleField(slug, parameterMap.get("buildTitleField")[0], ps);
         }
+        
+        if (!parameterMap.get("buildPullRequestUrlField")[0].isEmpty()) {
+            PluginSettingsHelper.setPullRequestUrlFieldName(slug, parameterMap.get("buildPullRequestUrlField")[0], ps);
+        }
     }
 
     /**
@@ -239,6 +243,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         context.put("buildRefField", PluginSettingsHelper.getBuildReferenceField(slug, pluginSettings));
         context.put("buildDelayField", PluginSettingsHelper.getBuildDelay(slug, pluginSettings).toString());
         context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
+        context.put("buildPullRequestUrlField", PluginSettingsHelper.getPullRequestUrlFieldName(slug, pluginSettings));
         
         if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){
             context.put("triggerBuildOnCreate", "checked=\"checked\"");
@@ -265,6 +270,8 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         context.put("triggerBuildOnCreate", "");
         context.put("triggerBuildOnUpdate", "");
         context.put("triggerBuildOnReopen", "");
+        context.put("buildPullRequestUrlField", "");
+        context.put("buildDelayField", "");
     }
 
 }

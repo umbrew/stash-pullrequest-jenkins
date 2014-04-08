@@ -29,8 +29,9 @@ public interface JobTrigger {
      * @param eventType - The type of job trigger event
      * @param retryCount - Number of current retries
      * @param baseUrl - the Jenkins CI base URL
+     * @param projectId - The project id
      */
     public void triggerBuild(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, TriggerRequestEvent eventType,
-            int retryCount, String baseUrl);
+            int retryCount, String baseUrl, String projectId);
 
 }

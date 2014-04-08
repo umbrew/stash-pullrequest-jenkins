@@ -32,6 +32,7 @@ Go to your repository and choose "settings" -> "Jenkins Pull Request integration
 * "Build ref. field" - The name of job parameter the source SHA-1 should be inserted in when a build is triggered
 * "Build title field" - This is optional and the name of the job parameter the pull-request title should be set on when a build is triggered.
 * "Delay build" - This is by default 300 seconds (5 min) and will deplay the trigger of the build. Useful if have a process where you update the pull-request often
+* "Pull-Request URL field" - The is optional and point to the name of the job parameter that should contain the pull-request url. 
  
 ##  Building the source
 For building the source it's required you install the [Atlassian Plugin SDK](https://developer.atlassian.com/display/DOCS/Set+up+the+Atlassian+Plugin+SDK+and+Build+a+Project) The easiest way is to follow the link
@@ -63,6 +64,9 @@ If one CI server fail to process the request it will try the next in the list un
 ##  Upgrade from 1.0.4 to 1.0.5
 - Added support for delay the trigger of a build
 - The "build" button will unschedule the current build if any and force a new build immediately
+
+##  Upgrade from 1.0.5 to 1.0.6
+- Added support for passing the pull-request url to a job parameter to give full traceability both ways.
  
 Updated [02-01-2014]
 
