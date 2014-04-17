@@ -21,6 +21,15 @@
     <component key="JenkinsIntergration" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.intergration.JobTrigger</interface>
     </component>
+    
+    <component key="PxeSettings" class="com.harms.stash.plugin.jenkins.job.settings.PxeSupportImpl" public="true">
+        <interface>com.harms.stash.plugin.jenkins.job.settings.PxeSettings</interface>
+    </component>
+    
+    <component key="JenkinsSettings" class="com.harms.stash.plugin.jenkins.job.settings.JenkinsSupportImpl" public="true">
+        <interface>com.harms.stash.plugin.jenkins.job.settings.JenkinsSettings</interface>
+    </component>
+    
     <component key="stashEventListener" class="com.harms.stash.plugin.jenkins.job.intergration.StashEventListener"/>
 
 	<servlet name="SettingsServlet" key="settingsServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.JenkinsIntegrationPluginSettingsServlet">
@@ -31,6 +40,11 @@
     <servlet name="ManualTriggerBuildServlet" key="manualTriggerBuildServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuildServlet">
         <description key="manualTriggerBuildServlet.description">The manual trigger job Servlet</description>
         <url-pattern>/jenkins/manualtrigger/*</url-pattern>
+    </servlet>
+    
+    <servlet name="DisableAutomaticTriggerServlet" key="disableAutomaticTriggerServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.DisableAutomaticTriggerServlet">
+        <description key="disableAutomaticTriggerServlet.description">Disable automatic trigger Servlet</description>
+        <url-pattern>/jenkins/disabletrigger/*</url-pattern>
     </servlet>
     
     <servlet name="ScheduledJobTriggerInfoServlet" key="scheduledJobTriggerInfoServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ScheduledJobTriggerInfoServlet">

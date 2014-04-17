@@ -14,7 +14,7 @@ var pageInitialized = false;
 		var baseUrl = AJS.contextPath();
     	var repo = pullRequestJson.toRef.repository;
         var proj = repo.project;
-        return baseUrl+'/plugins/servlet/jenkins/settings/' + proj.key + '/' + repo.slug;
+        return baseUrl+'/plugins/servlet/jenkins/disabletrigger/' + proj.key + '/' + repo.slug;
     }
     
     function getManualTriggerServletUrl(pullRequestJson) {

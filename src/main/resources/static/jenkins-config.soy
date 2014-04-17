@@ -12,6 +12,8 @@
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
  * @param buildPullRequestUrlField Pull-request URL field
+ * @param pxeHostUrl PXE BOOT host URL field
+ * @param hostCheckerUrl Host checker URL
  */
 {template .repositorySettings}
 <html>
@@ -23,82 +25,114 @@
     <title>{$repository.slug} / Jenkins pull request integration settings</title>
 </head>
 <body>
-    <h3>Repository: {$repository.slug}</h3>
-    <p>Welcome Jenkins pull request integration settings</p>
-<div id="aui-message-bar"></div>    
+    <h3>Welcome CI integration settings</h3>
+<div id="aui-message-bar"></div>
 <form action="#" method="post" id="jenkinsconfigform" class="aui">
-    <fieldset>
-        <div class="field-group">
-            <label for="triggerBuildOnCreate">Trigger on new pull-request</label>
-            <input class="checkbox" type="checkbox" id="triggerBuildOnCreate" name="triggerBuildOnCreate" {$triggerBuildOnCreate}">
-            <div class="description">Enable for trigger a build when a new pull request is created</div>
+    <div class="aui-tabs horizontal-tabs" id="tabs-example1">
+        <ul class="tabs-menu">
+            <li class="menu-item active-tab">
+                <a href="#jenkins"><strong>Jenkins</strong></a>
+            </li>
+            <li class="menu-item">
+                <a href="#pxe"><strong>PXE</strong></a>
+            </li>
+        </ul>
+        <div class="tabs-pane active-pane" id="jenkins">
+            <h3>Jenkins</h3>
+            <fieldset>
+                <div class="field-group">
+                    <label for="triggerBuildOnCreate">Trigger on new pull-request</label>
+                    <input class="checkbox" type="checkbox" id="triggerBuildOnCreate" name="triggerBuildOnCreate" {$triggerBuildOnCreate}">
+                    <div class="description">Enable for trigger a build when a new pull request is created</div>
+                </div>
+                <div class="field-group">
+                    <label for="triggerBuildOnUpdate">Trigger on update pull-request</label>
+                    <input class="checkbox" type="checkbox" id="triggerBuildOnUpdate" name="triggerBuildOnUpdate" {$triggerBuildOnUpdate}">
+                    <div class="description">Enable for trigger a build when a pull request is updated</div>
+                </div>
+                <div class="field-group">
+                    <label for="triggerBuildOnReopen">Trigger on reopen pull-request</label>
+                    <input class="checkbox" type="checkbox" id="triggerBuildOnReopen" name="triggerBuildOnReopen" {$triggerBuildOnReopen}">
+                    <div class="description">Enable for trigger a build when a pull request is reopen</div>
+                </div>
+                
+                <div class="field-group">
+                    <label for="jenkinsBaseUrl">Url</label>
+                    <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" > <button class="aui-button" type="button" id="addJenkinsCiServer">Add</button>            
+                    <div class="description">A Base Url to the Jenkins API</div>
+                </div>
+                
+                 <div class="field-group">
+                    <label for="multiselect">Jenkins CI servers<span class="aui-icon icon-required"> required</span></label>
+                    <select class="multi-select" size="4" multiple="true" id="_jenkinsCIServerList" name="jenkinsCIServerList">
+                     {if $jenkinsCIServerList}
+                      {foreach $keyword in $jenkinsCIServerList}
+                        <option value="{$keyword}">{$keyword |bidiUnicodeWrap}</option>
+                      {/foreach}
+                     {/if}
+                    </select>
+                    <button class="aui-button" type="button" id="removeJenkinsCiServer" >Remove</button>
+                    <div class="description">A list of Jenkins CI servers for executing jobs.</div>
+                </div>
+                
+                <div class="field-group">
+                    <label for="jenkinsUserName">Username</label>
+                    <input class="text"" type="text" id="jenkinsUserName" name="jenkinsUserName" title="Username" value="{$jenkinsUserName}">
+                    <div class="description">Jenkins username</div>
+                </div>
+                <div class="field-group">
+                    <label for="jenkinsPassword" accesskey="p">Password</label>
+                    <input class="password" type="password" id="jenkinsPassword" name="jenkinsPassword" title="password" value="{$jenkinsPassword}">
+                </div>
+                
+                <div class="field-group">
+                    <label for="buildRefField">Build ref. field<span class="aui-icon icon-required"> required</span></label>
+                    <input class="text" type="text" id="buildRefField" name="buildRefField" title="Build ref. field" value="{$buildRefField}">
+                    <div class="description">The name of the build reference field for the jenkins job</div>
+                </div>
+                
+                <div class="field-group">
+                    <label for="buildTitleField">Build title field</label>
+                    <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
+                    <div class="description">Build title field</div>
+                </div>
+                
+                <div class="field-group">
+                    <label for="buildTitleField">Pull-Request URL field</label>
+                    <input class="text" type="text" id="buildPullRequestUrlField" name="buildPullRequestUrlField" title="Pull-request URL field" value="{$buildPullRequestUrlField}">
+                    <div class="description">Pull-request URL field, add the name of the job parameter that should contain the URL of the pull-request</div>
+                </div>
+                
+                 <div class="field-group">
+                    <label for="buildDelay">Delay build</label>
+                    <input class="text" type="text" id="buildDealyField" name="buildDelayField" title="Build delay field" value="{$buildDelayField}">
+                    <div class="description">Enter value in seconds for delaying the build when the pull-request is open,reopen, update</div>
+                </div>
+                <input class="text" type="hidden" id="repository.slug" name="repository.slug" value="{$repository.slug}">
+            </fieldset>
+         
         </div>
-        <div class="field-group">
-            <label for="triggerBuildOnUpdate">Trigger on update pull-request</label>
-            <input class="checkbox" type="checkbox" id="triggerBuildOnUpdate" name="triggerBuildOnUpdate" {$triggerBuildOnUpdate}">
-            <div class="description">Enable for trigger a build when a pull request is updated</div>
+        <div class="tabs-pane" id="pxe">
+            <h3>PXE configuration</h3>
+            <fieldset>
+                <div class="field-group">
+                    <label for="pxeName">PXE name</label>
+                    <input class="text" type="text" id="pxeName" name="pxeName" title="PXE host URL" value="PXEKOL">
+                    <div class="description">The name of the PXE configuration</div>
+                </div>
+                <div class="field-group">
+                    <label for="pxeHostUrl">PXE host url</label>
+                    <input class="text" type="text" id="pxeHostUrl" name="pxeHostUrl" title="PXE host URL" value="{$pxeHostUrl}">
+                    <div class="description">Point to the PXE service for PXE boot</div>
+                </div>
+                 <div class="field-group">
+                    <label for="HostCheckerUrl">Host checker url</label>
+                    <input class="text" type="text" id="hostCheckerUrl" name="hostCheckerUrl" title="Host checker URL" value="{$hostCheckerUrl}">
+                    <div class="description">Point to a URL for verifying progress of the host</div>
+                </div>
+            </fieldset>    
         </div>
-        <div class="field-group">
-            <label for="triggerBuildOnReopen">Trigger on reopen pull-request</label>
-            <input class="checkbox" type="checkbox" id="triggerBuildOnReopen" name="triggerBuildOnReopen" {$triggerBuildOnReopen}">
-            <div class="description">Enable for trigger a build when a pull request is reopen</div>
-        </div>
-        
-        <div class="field-group">
-            <label for="jenkinsBaseUrl">Url</label>
-            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" > <button class="aui-button" type="button" id="addJenkinsCiServer">Add</button>            
-            <div class="description">A Base Url to the Jenkins API</div>
-        </div>
-        
-         <div class="field-group">
-            <label for="multiselect">Jenkins CI servers<span class="aui-icon icon-required"> required</span></label>
-            <select class="multi-select" size="4" multiple="true" id="_jenkinsCIServerList" name="jenkinsCIServerList">
-             {if $jenkinsCIServerList}
-              {foreach $keyword in $jenkinsCIServerList}
-        		<option value="{$keyword}">{$keyword |bidiUnicodeWrap}</option>
-		      {/foreach}
-		     {/if}
-            </select>
-            <button class="aui-button" type="button" id="removeJenkinsCiServer" >Remove</button>
-            <div class="description">A list of Jenkins CI servers for executing jobs.</div>
-        </div>
-        
-        <div class="field-group">
-            <label for="jenkinsUserName">Username</label>
-            <input class="text"" type="text" id="jenkinsUserName" name="jenkinsUserName" title="Username" value="{$jenkinsUserName}">
-            <div class="description">Jenkins username</div>
-        </div>
-        <div class="field-group">
-            <label for="jenkinsPassword" accesskey="p">Password</label>
-            <input class="password" type="password" id="jenkinsPassword" name="jenkinsPassword" title="password" value="{$jenkinsPassword}">
-        </div>
-        
-        <div class="field-group">
-            <label for="buildRefField">Build ref. field<span class="aui-icon icon-required"> required</span></label>
-            <input class="text" type="text" id="buildRefField" name="buildRefField" title="Build ref. field" value="{$buildRefField}">
-            <div class="description">The name of the build reference field for the jenkins job</div>
-        </div>
-        
-        <div class="field-group">
-            <label for="buildTitleField">Build title field</label>
-            <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
-            <div class="description">Build title field</div>
-        </div>
-        
-        <div class="field-group">
-            <label for="buildTitleField">Pull-Request URL field</label>
-            <input class="text" type="text" id="buildPullRequestUrlField" name="buildPullRequestUrlField" title="Pull-request URL field" value="{$buildPullRequestUrlField}">
-            <div class="description">Pull-request URL field, add the name of the job parameter that should contain the URL of the pull-request</div>
-        </div>
-        
-         <div class="field-group">
-            <label for="buildDelay">Delay build</label>
-            <input class="text" type="text" id="buildDealyField" name="buildDelayField" title="Build delay field" value="{$buildDelayField}">
-            <div class="description">Enter value in seconds for delaying the build when the pull-request is open,reopen, update</div>
-        </div>
-        <input class="text" type="hidden" id="repository.slug" name="repository.slug" value="{$repository.slug}">
-    </fieldset>
-
+    </div><!-- .aui-tabs -->
     
     <div class="buttons-container">
         <div class="buttons">

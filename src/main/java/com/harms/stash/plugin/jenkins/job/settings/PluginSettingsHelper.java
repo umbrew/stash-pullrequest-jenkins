@@ -20,6 +20,8 @@ import com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuildSer
 public class PluginSettingsHelper {
     private static final Logger log = LoggerFactory.getLogger(ManualTriggerBuildServlet.class);
     
+    private enum PXE_FIELDS {HOST_TO_IMAGE, PXE_HOST};
+    
     private static final String CHECKED = "checked";
     public static final String PLUGIN_STORAGE_KEY = "stash.plugin.jenkins.settingsui";
     public static final String BUILD_TITLE_FIELD = PLUGIN_STORAGE_KEY + ".buildTitleField";
@@ -33,6 +35,9 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
     private static final String JENKINS_PR_URL_FIELD = PLUGIN_STORAGE_KEY + ".jenkinsPRUrl";
+    private static final String PXE_HOST_URL = PLUGIN_STORAGE_KEY + ".pxeHostUrl";
+    private static final String HOST_URL_CHECKER = PLUGIN_STORAGE_KEY + ".hostUrlChecker";
+    private static final String PXE_HOST_NAME = PLUGIN_STORAGE_KEY + ".pxeHostName";
     
     private static final String BUILD_DELAY_FIELD = PLUGIN_STORAGE_KEY + ".buildDelayField";
     
@@ -49,6 +54,18 @@ public class PluginSettingsHelper {
      */
     static private String getDisableAutomaticBuildSettingsKey(String projectKey, String slug, Long pullRequestId) {
         return "stash.plugin.jenkins.settingsui." + projectKey + "/" + slug+ "/" +pullRequestId;
+    }
+    
+    /**
+     * Return the PXE pull-request settings
+     * @param field
+     * @param repositoryKey - The repository key
+     * @param slug - The slug of the repository to search for
+     * @param pullRequestId - The id of the pull-request
+     * @return "stash.plugin.jenkins.settingsui.<PXE_FIELD>.<project key>.<slug>.pull-request-id"
+     */
+    static private String getPullRequestPxeSettingsKey(PXE_FIELDS field, String projectKey, String slug, Long pullRequestId) {
+        return "stash.plugin.jenkins.pxe."+field+"." + projectKey + "." + slug+ "." +pullRequestId;
     }
     
     static public String getPluginKey(String baseKey, String slug) {
@@ -374,6 +391,8 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_LAST_CI_SERVER,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_URL,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.HOST_URL_CHECKER,slug));
     }
     
     /**
@@ -458,5 +477,113 @@ public class PluginSettingsHelper {
      */
     public static void setPullRequestUrlFieldName(String slug, String field, PluginSettings settings) {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug), field);
+    }
+    
+    /**
+     * Set the PXE host URL
+     * @param slug
+     * @param pxeHostUrl - The PXE host url for pxe boot a server
+     * @param settings
+     */
+    public static void setPxeHostUrl(String slug, String pxeHostUrl, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_URL, slug), pxeHostUrl);
+    }
+    
+    /**
+     * Get the PXE host url for PXE boot a server
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getPxeHostUrl(String slug, PluginSettings settings) {
+        String pxeUrl = "";
+        if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_URL,slug)) != null) {
+            pxeUrl = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_URL,slug)); 
+        }
+        
+        return pxeUrl; 
+        
+    }
+    
+    /**
+     * Set the PXE host name
+     * @param slug
+     * @param pxeHostName - The PXE host url for pxe boot a server
+     * @param settings
+     */
+    public static void setPxeHostName(String slug, String pxeHostName, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_NAME, slug), pxeHostName);
+    }
+    
+    /**
+     * Get the PXE host name for PXE boot a server
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getPxeHostName(String slug, PluginSettings settings) {
+        String pxeHostName = "";
+        if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_NAME,slug)) != null) {
+            pxeHostName = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.PXE_HOST_NAME,slug)); 
+        }
+        
+        return pxeHostName; 
+        
+    }
+    
+    /**
+     * Set the host checker URL for checking if a host is successfully imaged
+     * @param slug
+     * @param hostCheckerUrl - The URL the host checker should use to verify it has been successfully imaged
+     * @param settings
+     */
+    public static void setHostCheckerUrl(String slug, String hostCheckerUrl, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.HOST_URL_CHECKER, slug), hostCheckerUrl);
+    }
+    
+    /**
+     * Get the host checker URL for checking if a host is successfully imaged
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getHostCheckerUrl(String slug, PluginSettings settings) {
+        String hostCheckerUrl = "";
+        if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.HOST_URL_CHECKER,slug)) != null) {
+            hostCheckerUrl = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.HOST_URL_CHECKER,slug)); 
+        }
+        
+        return hostCheckerUrl; 
+        
+    }
+    
+    /**
+     * Get the host to image stored on the pull-request;
+     * @param projectKey - The stash project key
+     * @param slug
+     * @param pullRequestId - The pull-request id to retrieve the value from 
+     * @param settings
+     * @return
+     */
+    public static String getPullRequestHostToImage(String projectKey, String slug, Long pullRequestId,PluginSettings settings) {
+        String pullRequestHostToImage = "";
+        final String pxeSettingsKey = PluginSettingsHelper.getPullRequestPxeSettingsKey(PXE_FIELDS.HOST_TO_IMAGE, projectKey, slug, pullRequestId);
+        if (settings.get(pxeSettingsKey) != null) {
+            pullRequestHostToImage = (String) settings.get(pxeSettingsKey);
+        }
+        return pullRequestHostToImage;
+    }
+    
+    /**
+     * Set the host to image for the specified pull-request
+     * @param pullRequestHostToImage - The name of the host / ip to image
+     * @param projectKey - The stash project key.
+     * @param slug
+     * @param pullRequestId -The pull-request id to set the value on 
+     * @param settings
+     */
+    public static void setPullRequestHostToImage(String pullRequestHostToImage, String projectKey, String slug, Long pullRequestId,PluginSettings settings) {
+        final String pxeSettingsKey = PluginSettingsHelper.getPullRequestPxeSettingsKey(PXE_FIELDS.HOST_TO_IMAGE, projectKey, slug, pullRequestId);
+        settings.put(pxeSettingsKey, pullRequestHostToImage);
     }
 }

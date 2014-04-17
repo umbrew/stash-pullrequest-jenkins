@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.sal.api.user.UserProfile;
@@ -20,9 +19,8 @@ import com.atlassian.soy.renderer.SoyTemplateRenderer;
 import com.atlassian.stash.repository.Repository;
 import com.atlassian.stash.repository.RepositoryService;
 import com.google.common.collect.Maps;
-import com.harms.stash.plugin.jenkins.job.settings.DecryptException;
-import com.harms.stash.plugin.jenkins.job.settings.EncryptException;
-import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
+import com.harms.stash.plugin.jenkins.job.settings.JenkinsSettings;
+import com.harms.stash.plugin.jenkins.job.settings.PxeSettings;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.UpgradeService;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_1;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
@@ -35,15 +33,19 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(JenkinsIntegrationPluginSettingsServlet.class);
     private final SoyTemplateRenderer soyTemplateRenderer;
     private final RepositoryService repositoryService;
-    private final PluginSettingsFactory pluginSettingsFactory;
     private final UserManager userManager;
     private final UpgradeService upgradeService;
+    private final PxeSettings pxeSupportSettings;
+    private final JenkinsSettings jenkinsSettings;
+    private String slug;
+    private String projectKey;
 
-    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userService) {
+    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userService, PxeSettings pxeSupportSettings, JenkinsSettings jenkinsSettings) {
         this.soyTemplateRenderer = soyTemplateRenderer;
         this.repositoryService = repositoryService;
-        this.pluginSettingsFactory = pluginSettingsFactory;
         this.userManager = userService;
+        this.pxeSupportSettings = pxeSupportSettings;
+        this.jenkinsSettings = jenkinsSettings;
         upgradeService = new UpgradeService(pluginSettingsFactory);
         
     }
@@ -69,94 +71,33 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         log.debug("Invoke JenkinsIntegrationPluginSettingsServlet");
-        PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
+        if (retrieveParameters(req, resp)) {
+            try {
+                Map<String, String[]> parameterMap = req.getParameterMap();
+                jenkinsSettings.updateSettings(parameterMap.get("repository.slug")[0], parameterMap);
+                pxeSupportSettings.updateSettings(parameterMap.get("repository.slug")[0], parameterMap);
+            } catch (Exception e) {
+                throw new ServletException("Not able to update the settings", e);
+            }
+            resp.sendRedirect(req.getRequestURI());
+        }
+    }
+
+    private boolean retrieveParameters(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String pathInfo = req.getPathInfo();
 
         String[] components = pathInfo.split("/");
-
         if (components.length < 3) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
+            return false;
         }
         
-        if (req.getParameter("disableBuildParameter") != null) {
-            Repository repository = repositoryService.getBySlug(components[1], components[2]);
-            updatePullRequestSetttings(pluginSettings, req.getParameter("disableBuildParameter"), repository.getProject().getKey(),repository.getSlug(),Long.valueOf(components[3]));
-            resp.setStatus(HttpServletResponse.SC_OK);
-        } else {
-           try {
-               updatePluginSettings(pluginSettings, req.getParameterMap());
-            } catch (EncryptException e) {
-                throw new ServletException("Not able to update the settings",e);
-            }
-           resp.sendRedirect(req.getRequestURI());
-        }    
+        slug = components[2];
+        projectKey = components[1];
+        
+        return true;
     }
-
-   
-    /**
-     * Update plugin settings from the parameterMap
-     * @param ps - {@link PluginSettings} 
-     * @param parameterMap - A map containing parameter name and value 
-     * @throws EncryptException 
-     */
-    private void updatePluginSettings(PluginSettings ps, Map<String, String[]> parameterMap) throws EncryptException {
-        String slug = parameterMap.get("repository.slug")[0];
-        PluginSettingsHelper.resetSettings(slug,ps);
-        
-        String[] jenkinsCIServerList = parameterMap.get("jenkinsCIServerList");
-        if (jenkinsCIServerList != null) {
-            PluginSettingsHelper.setJenkinsCIServerList(jenkinsCIServerList, slug, ps);
-        }
-        
-        PluginSettingsHelper.setBuildReferenceField(slug, parameterMap.get("buildRefField")[0], ps);
-        PluginSettingsHelper.setBuildDelay(slug, new Integer(parameterMap.get("buildDelayField")[0]), ps);
-        
-        if (parameterMap.containsKey("triggerBuildOnCreate")) {
-            PluginSettingsHelper.enableTriggerOnCreate(slug, ps);
-        }
-        
-        if (parameterMap.containsKey("triggerBuildOnUpdate")) {
-            PluginSettingsHelper.enableTriggerOnUpdate(slug, ps);
-        }
-        
-        if (parameterMap.containsKey("triggerBuildOnReopen")) {
-            PluginSettingsHelper.enableTriggerOnReopen(slug, ps);
-        }
-        
-        if (!parameterMap.get("jenkinsUserName")[0].isEmpty()) {
-            PluginSettingsHelper.setUsername(slug, parameterMap.get("jenkinsUserName")[0].getBytes(), ps);
-        }
-        if (!parameterMap.get("jenkinsPassword")[0].isEmpty()) {
-            PluginSettingsHelper.setPassword(slug, parameterMap.get("jenkinsPassword")[0].getBytes(), ps);
-        }
-
-        if (!parameterMap.get("buildTitleField")[0].isEmpty()) {
-            PluginSettingsHelper.setBuildTitleField(slug, parameterMap.get("buildTitleField")[0], ps);
-        }
-        
-        if (!parameterMap.get("buildPullRequestUrlField")[0].isEmpty()) {
-            PluginSettingsHelper.setPullRequestUrlFieldName(slug, parameterMap.get("buildPullRequestUrlField")[0], ps);
-        }
-    }
-
-    /**
-     * Updates the pull-request settings with the state of the disable automatic check box
-     * @param pluginSettings - {@link PluginSettings}
-     * @param disableAutomaticBuildParameter - the state of the disable automatic check box
-     * @param projectKey
-     * @param slug
-     * @param pullRequestId
-     */
-    private void updatePullRequestSetttings(PluginSettings pluginSettings, String disableAutomaticBuildParameter,String projectKey, String slug, Long pullRequestId) {
-        if (disableAutomaticBuildParameter.isEmpty()) {
-            PluginSettingsHelper.clearAutomaticBuildFlag(projectKey,slug,pullRequestId,pluginSettings); 
-        } else {
-            PluginSettingsHelper.enableAutomaticBuildFlag(projectKey,slug,pullRequestId,pluginSettings); 
-        }
-    }
-
-
+    
     private void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException
     {
         //response.sendRedirect(loginUriProvider.getLoginUri(getUri(request)).toASCIIString());
@@ -164,39 +105,27 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // Get repoSlug from path
-        String pathInfo = req.getPathInfo();
-        String[] components = pathInfo.split("/");
-        
+
         UserProfile user = userManager.getRemoteUser(req);
         if (user == null || (!userManager.isSystemAdmin(user.getUserKey()))) {
             redirectToLogin(req, resp);
         }
-        
-        if (components.length < 3) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        
-        Repository repository = repositoryService.getBySlug(components[1], components[2]);
-        if (repository == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
-        
-        if (components.length == 4) {
-            //handle settings for a pull-request
-            String readPullRequestSettings = readPullRequestSettings(resp, new Long(components[3]), repository);
-            if (readPullRequestSettings != null) {
-                resp.setContentType("text/plain");
-                resp.getWriter().print(readPullRequestSettings);
-                resp.getWriter().flush();
+        if (retrieveParameters(req, resp)) {
+            Repository repository = repositoryService.getBySlug(projectKey, slug);
+            if (repository == null) {
+                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
-        } else {
+            
             Map<String, Object> context = Maps.newHashMap();
             upgradeSettings(repository); //run the upgrade steps for the settings
-            resetFormFields(context);
-            readPluginSettings(repository, context);
+           
+           
+            try {
+                readPluginSettings(repository, context);
+            } catch (Exception e) {
+                throw new ServletException("Not able to read the settings", e);
+            }
             render(resp, context);
         }
     }
@@ -215,48 +144,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         upgradeService.process(); //if the upgrade is already executed this will just return
     }
 
-    private String readPullRequestSettings(HttpServletResponse resp, Long pullRequestId, Repository repository) throws IOException {
-        PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
-        return PluginSettingsHelper.isAutomaticBuildDisabled(repository.getProject().getKey(), repository.getSlug(), pullRequestId, pluginSettings) ? "CHECKED":"";
-    }
-
-    private void readPluginSettings(Repository repository, Map<String, Object> context) {
-        PluginSettings pluginSettings = pluginSettingsFactory.createGlobalSettings();
+    private void readPluginSettings(Repository repository, Map<String, Object> context) throws Exception {
         String slug = repository.getSlug();
-        
-        context.put("jenkinsCIServerList", PluginSettingsHelper.getJenkinsCIServerList(slug, pluginSettings));
-        
-        try {
-            context.put("jenkinsUserName",new String(PluginSettingsHelper.getUsername(slug, pluginSettings)));
-        } catch (DecryptException e) {
-            log.error("Not able to decrypt the username, will reset the field. You will have to re-enter username",e);
-            context.put("jenkinsUserName","");
-        }
-        
-        try {
-            context.put("jenkinsPassword", new String(PluginSettingsHelper.getPassword(slug, pluginSettings)));
-        } catch (DecryptException e) {
-            log.error("Not able to decrypt the password, will reset the field. You will have to re-enter password",e);
-            context.put("jenkinsPassword","");
-        }
-        
-        context.put("buildRefField", PluginSettingsHelper.getBuildReferenceField(slug, pluginSettings));
-        context.put("buildDelayField", PluginSettingsHelper.getBuildDelay(slug, pluginSettings).toString());
-        context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
-        context.put("buildPullRequestUrlField", PluginSettingsHelper.getPullRequestUrlFieldName(slug, pluginSettings));
-        
-        if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){
-            context.put("triggerBuildOnCreate", "checked=\"checked\"");
-        } 
-        
-        if (PluginSettingsHelper.isTriggerBuildOnUpdate(slug, pluginSettings)){
-            context.put("triggerBuildOnUpdate", "checked=\"checked\"");
-        } 
-        
-        if (PluginSettingsHelper.isTriggerBuildOnReopen(slug, pluginSettings)){
-            context.put("triggerBuildOnReopen", "checked=\"checked\"");
-        } 
-        
+        resetFormFields(context);
+        context.putAll(jenkinsSettings.readSettings(slug));
+        context.putAll(pxeSupportSettings.readSettings(slug));
         context.put("repository", repository);
     }
 
@@ -272,6 +164,8 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
         context.put("triggerBuildOnReopen", "");
         context.put("buildPullRequestUrlField", "");
         context.put("buildDelayField", "");
+        context.put("pxeHostUrl", "");
+        context.put("hostCheckerUrl", "");
     }
 
 }

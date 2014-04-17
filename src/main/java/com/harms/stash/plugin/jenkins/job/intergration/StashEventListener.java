@@ -106,7 +106,7 @@ public class StashEventListener {
     }
     
     /**
-     * Remove the disable automatic build settins when the pull-request is merged or declined
+     * Remove the disable automatic build settings when the pull-request is merged or declined
      * @param pushEvent
      */
     private void removeDisableAutomaticBuildProperty(PullRequestEvent pushEvent) {
