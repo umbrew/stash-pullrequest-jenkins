@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 
-final public class JenkinsSettingsImpl implements PxeSettings {
+final public class JenkinsSettingsImpl implements JenkinsSettings {
     private static final Logger log = LoggerFactory.getLogger(JenkinsSettingsImpl.class);
     private final PluginSettings ps;
 

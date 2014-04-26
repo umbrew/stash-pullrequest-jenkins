@@ -17,16 +17,17 @@
     <component-import key="pluginScheduler" interface="com.atlassian.sal.api.scheduling.PluginScheduler"/>
     <component-import key="securityService" interface="com.atlassian.stash.user.SecurityService"/>
     <component-import key="webResourceUrlProvider" interface="com.atlassian.plugin.webresource.WebResourceUrlProvider"/>
+    <component-import key="buildStatusService" interface="com.atlassian.stash.build.BuildStatusService" />
     
     <component key="JenkinsIntergration" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.intergration.JobTrigger</interface>
     </component>
     
-    <component key="PxeSettings" class="com.harms.stash.plugin.jenkins.job.settings.PxeSupportImpl" public="true">
+    <component key="PxeSettings" class="com.harms.stash.plugin.jenkins.job.settings.PxeSettingsImpl" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.settings.PxeSettings</interface>
     </component>
     
-    <component key="JenkinsSettings" class="com.harms.stash.plugin.jenkins.job.settings.JenkinsSupportImpl" public="true">
+    <component key="JenkinsSettings" class="com.harms.stash.plugin.jenkins.job.settings.JenkinsSettingsImpl" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.settings.JenkinsSettings</interface>
     </component>
     
@@ -50,6 +51,11 @@
     <servlet name="ScheduledJobTriggerInfoServlet" key="scheduledJobTriggerInfoServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.ScheduledJobTriggerInfoServlet">
         <description key="scheduledJobTriggerInfoServlet.description">Retrieve registered schedule job trigger for a pull-request</description>
         <url-pattern>/jenkins/scheduledtriggers/*</url-pattern>
+    </servlet>
+    
+    <servlet name="JenkinsIntegrationServlet" key="jenkinsIntegrationServlet" class="com.harms.stash.plugin.jenkins.job.settings.servlet.JenkinsIntegrationServlet">
+        <description key="JenkinsIntegrationServlet.description">Retrieve Jenkins Job information etc</description>
+        <url-pattern>/jenkins/jenkinsintegration/*</url-pattern>
     </servlet>
 
 	<stash-resource key="setting-soy" name="Jenkins Pull Request Integration Templates">

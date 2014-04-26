@@ -62,7 +62,7 @@
                     <div class="description">A Base Url to the Jenkins API</div>
                 </div>
                 
-                 <div class="field-group">
+                <div class="field-group">
                     <label for="multiselect">Jenkins CI servers<span class="aui-icon icon-required"> required</span></label>
                     <select class="multi-select" size="4" multiple="true" id="_jenkinsCIServerList" name="jenkinsCIServerList">
                      {if $jenkinsCIServerList}
@@ -83,6 +83,18 @@
                 <div class="field-group">
                     <label for="jenkinsPassword" accesskey="p">Password</label>
                     <input class="password" type="password" id="jenkinsPassword" name="jenkinsPassword" title="password" value="{$jenkinsPassword}">
+                    <div class="description">Jenkins password</div>
+                </div>
+                <div class="field-group">
+                     <label for="jenkinsJobToTrigger">Job</label>
+                     <a href="#jenkinsJob" aria-owns="jenkinsJob" aria-haspopup="true" class="aui-button aui-dropdown2-trigger aui-style-default">Jenkins Jobs</a></p>
+                     <!-- Simple Dropdown - dropdown -->
+                     <div id="jenkinsJob" class="aui-dropdown2 aui-style-default">
+                         <ul class="aui-list-truncate" id="jenkinsJobList">
+                            
+                         </ul>
+                     </div><!-- .aui-dropdown2 -->
+                    <div class="description">Please select a job to trigger. If the list is empty make sure you enter the correct username and password</div>
                 </div>
                 
                 <div class="field-group">
@@ -125,8 +137,13 @@
                     <input class="text" type="text" id="pxeHostUrl" name="pxeHostUrl" title="PXE host URL" value="{$pxeHostUrl}">
                     <div class="description">Point to the PXE service for PXE boot</div>
                 </div>
-                 <div class="field-group">
+                <div class="field-group">
                     <label for="HostCheckerUrl">Host checker url</label>
+                    <input class="text" type="text" id="hostCheckerUrl" name="hostCheckerUrl" title="Host checker URL" value="{$hostCheckerUrl}">
+                    <div class="description">Point to a URL for verifying progress of the host</div>
+                </div>
+                <div class="field-group">
+                    <label for="JenkinsIsoJob">Jenkins Job ISO</label>
                     <input class="text" type="text" id="hostCheckerUrl" name="hostCheckerUrl" title="Host checker URL" value="{$hostCheckerUrl}">
                     <div class="description">Point to a URL for verifying progress of the host</div>
                 </div>
@@ -144,7 +161,23 @@
 	{literal}
 		<script>
 		  var editUrl = false;
-		  
+		  var baseUrl = AJS.contextPath();
+		  var jenkinsServlet = { getJobList : function() {
+             AJS.$.ajax({
+              type: "GET",
+              url: baseUrl+'/plugins/servlet/jenkins/jenkinsintegration/listjobs/',
+              success: function(data) {
+                            if (data != null && data.length > 0) {
+                              AJS.$("#jenkinsJobList").append('<li><a href="http://example.com/">Lister</a></li>');
+                              AJS.$("#jenkinsJobList").append('<li><a href="http://example.com/">Lister</a></li>');
+                              AJS.$("#jenkinsJobList").append('<li><a href="http://example.com/">Lister1</a></li>');
+                              AJS.$("#jenkinsJobList").append('<li><a href="http://example.com/">Lister2</a></li>');
+                              AJS.$("#jenkinsJobList").append('<li><a href="http://example.com/">Lister3</a></li>');
+                            };
+                       }
+              });
+            }
+        };
 		  AJS.$(document).ready(function() {
 		         AJS.$("#addJenkinsCiServer").unbind("click").click(function(e) {
 		            var url =  AJS.$.trim(AJS.$("#jenkinsBaseUrl").val());
@@ -167,9 +200,14 @@
 			    return false;
 		  });
 		  AJS.$(document).ready(function() {
-			     AJS.$("#_jenkinsCIServerList").unbind("dblclick").dblclick(function(e) {
-		            AJS.$("#jenkinsBaseUrl").val(AJS.$("#_jenkinsCIServerList option:selected").val());
-		            editUrl = true;
+                 AJS.$("#removeJenkinsCiServer").unbind("click").click(function(e) {
+                    AJS.$("#_jenkinsCIServerList option:selected").remove();
+                 });
+                return false;
+          });
+		  AJS.$(document).ready(function() {
+			     AJS.$("#jenkinsJob").unbind("dblclick").click(function(e) {
+		           jenkinsServlet.getJobList();
 			     });
 			    return false;
 		  });
