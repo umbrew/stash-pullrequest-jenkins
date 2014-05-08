@@ -1,5 +1,6 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
+
 /**
  * 
  * @author fharms
@@ -33,5 +34,6 @@ public interface JobTrigger {
      */
     public void triggerBuild(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, TriggerRequestEvent eventType,
             int retryCount, String baseUrl, String projectId);
+    
 
 }
