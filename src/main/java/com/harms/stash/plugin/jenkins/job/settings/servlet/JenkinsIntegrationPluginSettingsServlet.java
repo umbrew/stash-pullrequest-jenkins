@@ -4,17 +4,16 @@ import java.io.IOException;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
 import com.atlassian.soy.renderer.SoyException;
 import com.atlassian.soy.renderer.SoyTemplateRenderer;
 import com.atlassian.stash.repository.Repository;
@@ -29,21 +28,20 @@ import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_3;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_5;
 
-public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
+public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseServlet {
     private static final long serialVersionUID = -1645440333554544743L;
     
     private static final Logger log = LoggerFactory.getLogger(JenkinsIntegrationPluginSettingsServlet.class);
     private final SoyTemplateRenderer soyTemplateRenderer;
     private final RepositoryService repositoryService;
     private final PluginSettingsFactory pluginSettingsFactory;
-    private final UserManager userManager;
     private final UpgradeService upgradeService;
 
-    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userService) {
+    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userManager, LoginUriProvider loginUriProvider) {
+        super(loginUriProvider, userManager);
         this.soyTemplateRenderer = soyTemplateRenderer;
         this.repositoryService = repositoryService;
         this.pluginSettingsFactory = pluginSettingsFactory;
-        this.userManager = userService;
         upgradeService = new UpgradeService(pluginSettingsFactory);
         
     }
@@ -157,21 +155,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends HttpServlet {
     }
 
 
-    private void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException
-    {
-        //response.sendRedirect(loginUriProvider.getLoginUri(getUri(request)).toASCIIString());
-    }
-    
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // Get repoSlug from path
         String pathInfo = req.getPathInfo();
         String[] components = pathInfo.split("/");
-        
-        UserProfile user = userManager.getRemoteUser(req);
-        if (user == null || (!userManager.isSystemAdmin(user.getUserKey()))) {
-            redirectToLogin(req, resp);
-        }
         
         if (components.length < 3) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);

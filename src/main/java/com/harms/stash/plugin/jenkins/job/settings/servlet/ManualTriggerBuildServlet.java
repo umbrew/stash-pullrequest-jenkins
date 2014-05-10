@@ -5,13 +5,13 @@ import java.util.Arrays;
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.scheduling.PluginScheduler;
@@ -31,7 +31,7 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  * @author fharms
  *
  */
-public class ManualTriggerBuildServlet extends HttpServlet {
+public class ManualTriggerBuildServlet extends JenkinsStashBaseServlet {
     private static final Logger log = LoggerFactory.getLogger(ManualTriggerBuildServlet.class);
     
     private static final long serialVersionUID = -6947257382708409328L;
@@ -39,15 +39,15 @@ public class ManualTriggerBuildServlet extends HttpServlet {
     private final PullRequestService pullRequestService;
     private final PluginScheduler pluginScheduler;
     private final PluginSettings settings;
-    private final UserManager userManager;
+    
     private final SecurityService securityService;
 
     
-    public ManualTriggerBuildServlet(JobTrigger jenkinsCiIntergration, PullRequestService pullRequestService, PluginScheduler pluginScheduler, PluginSettingsFactory pluginSettingsFactory,UserManager userManager,SecurityService securityService) {
+    public ManualTriggerBuildServlet(JobTrigger jenkinsCiIntergration, PullRequestService pullRequestService, PluginScheduler pluginScheduler, PluginSettingsFactory pluginSettingsFactory,UserManager userManager,SecurityService securityService,LoginUriProvider loginUriProvider) {
+        super(loginUriProvider, userManager);
         log.debug("invoked constructor");
         this.securityService = securityService;
         this.pluginScheduler = pluginScheduler;
-        this.userManager = userManager;
         this.pullRequestService = pullRequestService;
         this.jenkinsCiIntergration = jenkinsCiIntergration;
         this.settings = pluginSettingsFactory.createGlobalSettings();
