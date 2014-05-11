@@ -176,8 +176,8 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
             //handle settings for a pull-request
             String readPullRequestSettings = readPullRequestSettings(resp, new Long(components[3]), repository);
             if (readPullRequestSettings != null) {
-                resp.setContentType("text/plain");
-                resp.getWriter().print(readPullRequestSettings);
+                resp.setContentType("application/json");
+                resp.getWriter().print("{\"form\":\""+readPullRequestSettings+"\"}");
                 resp.getWriter().flush();
             }
         } else {
