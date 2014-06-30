@@ -26,18 +26,23 @@ var pageInitialized = false;
     var storage = { getCheckBoxStatus : function(pullRequestJson) {
              AJS.$.ajax({
 	          type: "GET",
+	          dataType: "json",
 	          url: getSettingsServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
-	          success: function(data) {
-							var checkBox = $('#disablecheckbox_id');
-					        if (data != null && data.length > 0) {
-					        	checkBox.attr('checked', true);
-					        	AJS.messages.generic("#disable-automatic-build-message",{
-					        		   title:"The automatic build trigger is disabled!",
-					        		   fadeout:true
-					        	});
-					        } else {
-					        	checkBox.attr('checked', false);
-					        };
+	          success: function(data){
+	        	    		if (data.redirect) {
+	        	  				window.location.href = data.redirect; 
+	        	  			} else {
+								var checkBox = $('#disablecheckbox_id');
+						        if (data != null && data.form.length > 0) {
+						        	checkBox.attr('checked', true);
+						        	AJS.messages.generic("#disable-automatic-build-message",{
+						        		   title:"The automatic build trigger is disabled!",
+						        		   fadeout:true
+						        	});
+						        } else {
+						        	checkBox.attr('checked', false);
+						        };
+	        	  			};
 	                   }
 	          });
         },
@@ -49,12 +54,19 @@ var pageInitialized = false;
 	         AJS.$.ajax({
 	          type: "POST",
 	          url: getSettingsServletUrl(pullRequestJson)+'/'+pullRequestJson.id,
-	          data: {disableBuildParameter : disableBuild}
+	          data: {disableBuildParameter : disableBuild},
+	          success: function(data){
+	        	  if (data.redirect) {
+  	  				window.location.href = data.redirect; 
+  	  		      } else {
+		  	  		    AJS.messages.generic("#disable-automatic-build-message",{
+		  	      		   title:"The automatic build trigger is "+disableMsgStatus,
+		  	      		   fadeout:true
+		  	  		    });
+  	  		    	};
+	          	}
 	          });
-	         AJS.messages.generic("#disable-automatic-build-message",{
-      		   title:"The automatic build trigger is "+disableMsgStatus,
-      		   fadeout:true
-      	});
+	         
         },
         triggerBuild : function(pullRequestJson) {
 	         AJS.$.ajax({

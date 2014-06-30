@@ -17,6 +17,7 @@
     <component-import key="pluginScheduler" interface="com.atlassian.sal.api.scheduling.PluginScheduler"/>
     <component-import key="securityService" interface="com.atlassian.stash.user.SecurityService"/>
     <component-import key="webResourceUrlProvider" interface="com.atlassian.plugin.webresource.WebResourceUrlProvider"/>
+    <component-import key="loginUriProvider" name="Login URI provider" interface="com.atlassian.sal.api.auth.LoginUriProvider" />
     
     <component key="JenkinsIntergration" class="com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger" public="true">
         <interface>com.harms.stash.plugin.jenkins.job.intergration.JobTrigger</interface>

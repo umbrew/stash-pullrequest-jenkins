@@ -6,13 +6,14 @@ import java.util.Arrays;
 import java.util.Calendar;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.sal.api.auth.LoginUriProvider;
+import com.atlassian.sal.api.user.UserManager;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 /**
@@ -25,9 +26,13 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  * @author fharms
  *
  */
-public class ScheduledJobTriggerInfoServlet extends HttpServlet {
+public class ScheduledJobTriggerInfoServlet extends JenkinsStashBaseServlet {
     private static final long serialVersionUID = 604820129001885579L;
     private static final Logger log = LoggerFactory.getLogger(ScheduledJobTriggerInfoServlet.class);
+    
+    public ScheduledJobTriggerInfoServlet(LoginUriProvider loginUriProvider, UserManager userManager) {
+     super(loginUriProvider, userManager);
+    }
     
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
