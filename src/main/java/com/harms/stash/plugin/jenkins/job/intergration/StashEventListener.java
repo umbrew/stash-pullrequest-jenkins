@@ -1,6 +1,6 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
-import java.util.HashMap;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -18,6 +18,7 @@ import com.atlassian.stash.event.pull.PullRequestOpenedEvent;
 import com.atlassian.stash.event.pull.PullRequestReopenedEvent;
 import com.atlassian.stash.event.pull.PullRequestRescopedEvent;
 import com.atlassian.stash.pull.PullRequest;
+import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.repository.Repository;
 import com.atlassian.stash.user.SecurityService;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
@@ -31,9 +32,11 @@ public class StashEventListener {
     private final PluginScheduler pluginScheduler;
     private final UserManager userManager;
     private final SecurityService securityService;
+    private final PullRequestService pullRequestService;
     
-    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration, PluginScheduler pluginScheduler,UserManager userManager,SecurityService securityService) {
+    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration, PluginScheduler pluginScheduler,UserManager userManager,SecurityService securityService, PullRequestService pullRequestService) {
         this.pluginScheduler = pluginScheduler;
+        this.pullRequestService = pullRequestService;
         this.settings = pluginSettingsFactory.createGlobalSettings();
         this.jenkinsCI = jenkinsCiIntergration;
         this.userManager = userManager;
@@ -100,8 +103,10 @@ public class StashEventListener {
      * @param prd
      */
     private void scheduleJobTrigger(PullRequestEvent pushEvent, PullRequestData prd) {
-        if (PluginSettingsHelper.getScheduleJobTime(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId)) == null) {
-            pluginScheduler.scheduleJob(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId), JenkinsJobScheduler.class, createJobData(pushEvent), PluginSettingsHelper.generateScheduleJobTime(prd.slug, settings, prd.pullRequestId), 0);
+        final Calendar scheduleJobTime = PluginSettingsHelper.getScheduleJobTime(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId));
+        if ((scheduleJobTime == null) || (System.currentTimeMillis() > scheduleJobTime.getTime().getTime())) {
+            Map<String, Object> jobData = JenkinsJobScheduler.buildJobDataMap(pushEvent.getPullRequest(),jenkinsCI,pullRequestService,userManager,securityService, getTriggerEventType(pushEvent));
+            pluginScheduler.scheduleJob(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId), JenkinsJobScheduler.class, jobData, PluginSettingsHelper.generateScheduleJobTime(prd.slug, settings, prd.pullRequestId), 0);
         }
     }
     
@@ -118,6 +123,7 @@ public class StashEventListener {
     @EventListener
     public void declinedPullRequest(PullRequestDeclinedEvent pushEvent)
     {
+        PluginSettingsHelper.resetScheduleTime(PluginSettingsHelper.getScheduleJobKey(pushEvent.getPullRequest().getFromRef().getRepository().getSlug(),pushEvent.getPullRequest().getId()));
         //make sure we clean up the disable automatic property 
         removeDisableAutomaticBuildProperty(pushEvent);
     }
@@ -125,17 +131,8 @@ public class StashEventListener {
     @EventListener
     public void mergePullRequest(PullRequestMergedEvent pushEvent)
     {
+        PluginSettingsHelper.resetScheduleTime(PluginSettingsHelper.getScheduleJobKey(pushEvent.getPullRequest().getFromRef().getRepository().getSlug(),pushEvent.getPullRequest().getId()));
         //make sure we clean up the disable automatic property 
         removeDisableAutomaticBuildProperty(pushEvent);
-    }
-    
-    private Map<String, Object> createJobData(PullRequestEvent pushEvent) {
-        Map<String, Object> jobDataMap = new HashMap<String, Object>();
-        jobDataMap.put(JenkinsJobTrigger.class.getName(), jenkinsCI);
-        jobDataMap.put(PullRequest.class.getName(), pushEvent.getPullRequest());
-        jobDataMap.put(TriggerRequestEvent.class.getName(), getTriggerEventType(pushEvent));
-        jobDataMap.put("UserName",userManager.getRemoteUser().getUsername());
-        jobDataMap.put(SecurityService.class.getName(),securityService);
-        return jobDataMap;
     }
 }

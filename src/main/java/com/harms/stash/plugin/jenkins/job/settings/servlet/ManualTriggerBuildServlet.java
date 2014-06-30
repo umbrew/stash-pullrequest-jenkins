@@ -2,7 +2,6 @@ package com.harms.stash.plugin.jenkins.job.settings.servlet;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -21,7 +20,6 @@ import com.atlassian.stash.pull.PullRequest;
 import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.user.SecurityService;
 import com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobScheduler;
-import com.harms.stash.plugin.jenkins.job.intergration.JenkinsJobTrigger;
 import com.harms.stash.plugin.jenkins.job.intergration.JobTrigger;
 import com.harms.stash.plugin.jenkins.job.intergration.TriggerRequestEvent;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
@@ -83,21 +81,12 @@ public class ManualTriggerBuildServlet extends HttpServlet {
             } catch (IllegalArgumentException e) {
              log.debug("No current job was scheduled for job id "+scheduleJobKey);  
             }
-            pluginScheduler.scheduleJob(scheduleJobKey, JenkinsJobScheduler.class, getJobData(pullRequest),PluginSettingsHelper.setScheduleJobTime(slug, settings, pullRequestId,0), 0);
+            Map<String, Object> jobData = JenkinsJobScheduler.buildJobDataMap(pullRequest,jenkinsCiIntergration,pullRequestService,userManager,securityService,TriggerRequestEvent.FORCED_BUILD);
+            pluginScheduler.scheduleJob(scheduleJobKey, JenkinsJobScheduler.class, jobData,PluginSettingsHelper.setScheduleJobTime(slug, settings, pullRequestId,0), 0);
             resp.setStatus(HttpServletResponse.SC_OK);
         } else {
             log.error(String.format("Not able to retrieve the pull-reqeust based on the repository id %s and pull-request id %s",repositoryId,pullRequestId));
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, String.format("Not able to retrieve the pull-reqeust based on the repository id %s and pull-request id %s",repositoryId,pullRequestId));
         }
-    }
-
-    private Map<String, Object> getJobData(PullRequest pr) {
-        Map<String, Object> jobDataMap = new HashMap<String, Object>();
-        jobDataMap.put(JenkinsJobTrigger.class.getName(), jenkinsCiIntergration);
-        jobDataMap.put(PullRequest.class.getName(), pr);
-        jobDataMap.put(TriggerRequestEvent.class.getName(), TriggerRequestEvent.FORCED_BUILD);
-        jobDataMap.put("UserName",userManager.getRemoteUser().getUsername());
-        jobDataMap.put(SecurityService.class.getName(),securityService);
-        return jobDataMap;
     }
 }
