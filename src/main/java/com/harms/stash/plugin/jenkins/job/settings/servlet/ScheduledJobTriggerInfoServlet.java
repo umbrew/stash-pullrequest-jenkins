@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.sal.api.auth.LoginUriProvider;
-import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.stash.user.StashAuthenticationContext;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 /**
@@ -30,8 +30,8 @@ public class ScheduledJobTriggerInfoServlet extends JenkinsStashBaseServlet {
     private static final long serialVersionUID = 604820129001885579L;
     private static final Logger log = LoggerFactory.getLogger(ScheduledJobTriggerInfoServlet.class);
     
-    public ScheduledJobTriggerInfoServlet(LoginUriProvider loginUriProvider, UserManager userManager) {
-     super(loginUriProvider, userManager);
+    public ScheduledJobTriggerInfoServlet(LoginUriProvider loginUriProvider, StashAuthenticationContext stashAuthContext) {
+     super(loginUriProvider, stashAuthContext);
     }
     
     @Override

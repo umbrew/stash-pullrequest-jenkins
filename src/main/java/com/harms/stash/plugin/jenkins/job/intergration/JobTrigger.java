@@ -1,12 +1,14 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
+import java.io.Serializable;
+
 
 /**
  * 
  * @author fharms
  *
  */
-public interface JobTrigger {
+public interface JobTrigger extends Serializable {
 
     /**
      * @return the next CI server from the list of servers

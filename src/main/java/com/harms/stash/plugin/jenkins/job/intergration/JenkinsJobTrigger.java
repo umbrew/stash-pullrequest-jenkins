@@ -36,7 +36,9 @@ import com.atlassian.stash.pull.PullRequestService;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 final public class JenkinsJobTrigger implements JobTrigger {
-    private static final Logger log = LoggerFactory.getLogger(JenkinsJobTrigger.class);
+	private static final long serialVersionUID = 8685235357537808631L;
+
+	private transient static final Logger log = LoggerFactory.getLogger(JenkinsJobTrigger.class);
     
     private final PullRequestService pullRequestService;
     private final PluginSettings settings;
