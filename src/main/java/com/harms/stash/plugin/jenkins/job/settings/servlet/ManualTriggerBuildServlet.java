@@ -61,7 +61,16 @@ public class ManualTriggerBuildServlet extends JenkinsStashBaseServlet {
     
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String pathInfo = req.getPathInfo();
+	    // Set to expire far in the past.
+	    resp.setHeader("Expires", "Sat, 6 May 1995 12:00:00 GMT");
+	    // Set standard HTTP/1.1 no-cache headers.
+	    resp.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+	    // Set IE extended HTTP/1.1 no-cache headers (use addHeader).
+	    resp.addHeader("Cache-Control", "post-check=0, pre-check=0");
+	    // Set standard HTTP/1.0 no-cache header.
+	    resp.setHeader("Pragma", "no-cache");
+    	
+    	String pathInfo = req.getPathInfo();
         log.debug(String.format("invoked with path info %s", pathInfo));
 
         String[] components = pathInfo.split("/");
@@ -83,8 +92,8 @@ public class ManualTriggerBuildServlet extends JenkinsStashBaseServlet {
             String slug = pullRequest.getFromRef().getRepository().getSlug();
             String scheduleJobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
             JobId jobKey = JobId.of(scheduleJobKey);
-           
-            unscheduleJob(scheduleJobKey, jobKey);
+            
+            unscheduleJob(jobKey);
             
             Map<String, Serializable> jobData = JenkinsJobScheduler.buildJobDataMap(pullRequest,stashAuthContext,TriggerRequestEvent.FORCED_BUILD);
             Date jobTime = PluginSettingsHelper.setScheduleJobTime(slug, settings, pullRequestId,30);
@@ -117,11 +126,11 @@ public class ManualTriggerBuildServlet extends JenkinsStashBaseServlet {
 		}
 	}
 
-	private void unscheduleJob(String scheduleJobKey, JobId jobKey) {
+	private void unscheduleJob(JobId jobKey) {
 		try {
 			schedulerService.unscheduleJob(jobKey); //Unscheduled the current job if any 
 		} catch (IllegalArgumentException e) {
-			log.debug("No current job was scheduled for job id "+scheduleJobKey);  
+			log.debug("No current job was scheduled for job id "+jobKey);  
 		}
 	}
 }

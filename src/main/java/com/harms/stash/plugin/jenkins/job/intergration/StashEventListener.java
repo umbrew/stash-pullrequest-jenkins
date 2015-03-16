@@ -24,11 +24,8 @@ import com.atlassian.stash.event.pull.PullRequestOpenedEvent;
 import com.atlassian.stash.event.pull.PullRequestReopenedEvent;
 import com.atlassian.stash.event.pull.PullRequestRescopedEvent;
 import com.atlassian.stash.pull.PullRequest;
-import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.user.SecurityService;
 import com.atlassian.stash.user.StashAuthenticationContext;
-import com.atlassian.stash.user.UserService;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 public class StashEventListener {
@@ -38,11 +35,10 @@ public class StashEventListener {
     private final SchedulerService schedulerService;
     private final StashAuthenticationContext stashAuthContext;
     
-    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration, SchedulerService pluginScheduler,StashAuthenticationContext stashAuthContext,SecurityService securityService, PullRequestService pullRequestService,UserService userService) {
+    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, SchedulerService pluginScheduler,StashAuthenticationContext stashAuthContext) {
         this.schedulerService = pluginScheduler;
         this.settings = pluginSettingsFactory.createGlobalSettings();
         this.stashAuthContext = stashAuthContext;
-        pluginScheduler.registerJobRunner(JenkinsJobScheduler.jobRunnerKey, new JenkinsJobScheduler(pullRequestService,userService,securityService,jenkinsCiIntergration));
     }
     
     /**

@@ -46,21 +46,26 @@ public class JenkinsJobScheduler implements JobRunner {
 	}
     @Override
 	public JobRunnerResponse runJob(JobRunnerRequest request) {
-    	Map<String, Serializable> jobDataMap = request.getJobConfig().getParameters();
-         Long pullRequestId = (Long) jobDataMap.get("pullrequest_id");
-         Integer repositoryId = (Integer) jobDataMap.get("repository_id");
-         String slug = (String) jobDataMap.get("slug");
-         TriggerRequestEvent eventType = (TriggerRequestEvent) jobDataMap.get("TriggerRequestEvent");
-         StashUser user = userService.getUserByName((String) jobDataMap.get("User"));
-         String jobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
-         
-         try {
-         	securityService.impersonating(user, "background_trigger_jenkins_job").call(new UserOperation(pullRequestService, jenkinsCI, pullRequestId, repositoryId, eventType));
-         } catch (Throwable e) {
-             log.error(String.format("Not able to execute the background job as user %s",user.getDisplayName(), e));
-         } finally {
-             PluginSettingsHelper.resetScheduleTime(jobKey);
-         }
+    	try {
+	    	 Map<String, Serializable> jobDataMap = request.getJobConfig().getParameters();
+	         Long pullRequestId = (Long) jobDataMap.get("pullrequest_id");
+	         Integer repositoryId = (Integer) jobDataMap.get("repository_id");
+	         String slug = (String) jobDataMap.get("slug");
+	         TriggerRequestEvent eventType = (TriggerRequestEvent) jobDataMap.get("TriggerRequestEvent");
+	         StashUser user = userService.getUserByName((String) jobDataMap.get("User"));
+	         String jobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
+	         
+	         try {
+	         	securityService.impersonating(user, "background_trigger_jenkins_job").call(new UserOperation(pullRequestService, jenkinsCI, pullRequestId, repositoryId, eventType));
+	         } catch (Throwable e) {
+	             log.error(String.format("Not able to execute the background job as user %s",user.getDisplayName(), e));
+	         } finally {
+	             PluginSettingsHelper.resetScheduleTime(jobKey);
+	         }
+    	} catch (Exception e) {
+    		log.error(String.format("Not able to run job with id %s",request.getJobId().toString()),e);
+    		return JobRunnerResponse.failed(e);
+    	}
 		return JobRunnerResponse.success();
 	}
 
