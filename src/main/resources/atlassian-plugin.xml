@@ -12,10 +12,8 @@
     <component-import key="soyTemplateRenderer" interface="com.atlassian.soy.renderer.SoyTemplateRenderer"/>
     <component-import key="repositoryService" interface="com.atlassian.stash.repository.RepositoryService"/>
     <component-import key="pullRequestService" interface="com.atlassian.stash.pull.PullRequestService"/>
-    <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
-    <component-import key="pluginScheduler" interface="com.atlassian.sal.api.scheduling.PluginScheduler"/>
-    <component-import key="securityService" interface="com.atlassian.stash.user.SecurityService"/>
+    <component-import key="schedulerService" interface="com.atlassian.scheduler.SchedulerService"/>
     <component-import key="webResourceUrlProvider" interface="com.atlassian.plugin.webresource.WebResourceUrlProvider"/>
     <component-import key="loginUriProvider" name="Login URI provider" interface="com.atlassian.sal.api.auth.LoginUriProvider" />
     

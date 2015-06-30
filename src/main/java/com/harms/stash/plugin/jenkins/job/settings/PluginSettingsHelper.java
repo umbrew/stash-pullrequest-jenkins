@@ -32,6 +32,7 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_CREATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnCreate";
     public static final String TRIGGER_BUILD_ON_UPDATE = PLUGIN_STORAGE_KEY + ".triggerBuildOnUpdate";
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
+    public static final String DISABLE_AUTOMATIC_BUILD_BY_DEFAULT = PLUGIN_STORAGE_KEY + ".disableAutomaticBuildByDefault";
     private static final String JENKINS_PR_URL_FIELD = PLUGIN_STORAGE_KEY + ".jenkinsPRUrl";
     
     private static final String BUILD_DELAY_FIELD = PLUGIN_STORAGE_KEY + ".buildDelayField";
@@ -181,6 +182,17 @@ public class PluginSettingsHelper {
         }
     }
     
+    
+    /**
+     * Return true if the disable build by default is enabled for the plug-in
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static boolean isDisableAutomaticBuildByDefault(String slug, PluginSettings settings) {
+        return (CHECKED.equals(settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.DISABLE_AUTOMATIC_BUILD_BY_DEFAULT,slug))));
+    }
+    
     /**
      * Return true if the trigger on create flag is enabled for the plug-in
      * @param slug
@@ -318,6 +330,14 @@ public class PluginSettingsHelper {
     }
     
     /**
+     * Enable the disable build by default
+     * @param slug
+     * @param settings
+     */
+    public static void enableDisableAutomaticBuildByDefault(String slug, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.DISABLE_AUTOMATIC_BUILD_BY_DEFAULT, slug), CHECKED);
+    }
+    /**
      * Enable it should trigger a build when a pull-request is created
      * @param slug
      * @param settings
@@ -369,6 +389,7 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.DISABLE_AUTOMATIC_BUILD_BY_DEFAULT,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug));

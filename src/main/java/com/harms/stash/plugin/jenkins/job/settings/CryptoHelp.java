@@ -13,10 +13,10 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.jersey.core.util.Base64;
 
 /**
  * Encrypt and Decrypt a values base on it's key. 
@@ -71,7 +71,7 @@ public class CryptoHelp {
         SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-        return Base64.encode(cipher.doFinal(value));
+        return Base64.encodeBase64(cipher.doFinal(value));
     }
 
     public static byte[] decrypt(byte[] key, byte[] value) throws GeneralSecurityException {
@@ -85,7 +85,7 @@ public class CryptoHelp {
     
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-            byte[] original = cipher.doFinal(Base64.decode(value));
+            byte[] original = cipher.doFinal(Base64.decodeBase64(value));
     
             return original;
         }

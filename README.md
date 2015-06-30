@@ -1,8 +1,7 @@
 # Jenkins Pull-Request Integration
 
 This started as a project "how difficult could it be" to create a integration between Stash and Jenkins CI. 
-So I decided to build a small plugin for Stash inspired by all the examples provided by Atlassian, 
-it's still working progress and it only tested with Stash 2.10.1 and Jenkins CI 1.509.2
+So I decided to build a small plugin for Stash inspired by all the examples provided by Atlassian
 
 This stash plugin hook into create/update/reopen pull-request to trigger a build on Jenkins CI through the API. 
 3 hooks listing on events "PullRequestOpenedEvent", "PullRequestRescopedEvent" and "PullRequestReopenedEvent" and 
@@ -67,11 +66,13 @@ If one CI server fail to process the request it will try the next in the list un
 
 ##  Upgrade from 1.0.5 to 1.0.6
 - Added support for passing the pull-request url to a job parameter to give full traceability both ways.
- 
-Updated [02-01-2014]
 
-* Fixed an issue with null point when computing the encryption key. 
-* Upgrade Stash to version 2.8.2
+##  Upgrade from 1.0.6 to 1.0.7
+- The scheduler is now using the latest changes when it run, instead of using the change set when it was scheduled.
+
+##  Upgrade from 1.0.7 to 1.0.8
+- Upgrade to Stash 3.5
+- Introduce a setting to "Disable automatic build" by default when open or re-open a pull-request
 
 Flemming Harms
 

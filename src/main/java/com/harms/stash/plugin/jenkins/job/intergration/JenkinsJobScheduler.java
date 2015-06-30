@@ -1,16 +1,22 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.sal.api.scheduling.PluginJob;
-import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.scheduler.JobRunner;
+import com.atlassian.scheduler.JobRunnerRequest;
+import com.atlassian.scheduler.JobRunnerResponse;
+import com.atlassian.scheduler.config.JobRunnerKey;
 import com.atlassian.stash.pull.PullRequest;
 import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.user.SecurityService;
+import com.atlassian.stash.user.StashAuthenticationContext;
+import com.atlassian.stash.user.StashUser;
+import com.atlassian.stash.user.UserService;
 import com.atlassian.stash.util.Operation;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
@@ -23,63 +29,74 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  * @author fharms
  *
  */
-public class JenkinsJobScheduler implements PluginJob {
+public class JenkinsJobScheduler implements JobRunner {
+	public static final  JobRunnerKey jobRunnerKey = JobRunnerKey.of("com.harms.stash.plugin.jenkins.job.intergration:jenkins-job-intergration:ScheduleBuild");
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobScheduler.class);
+	private final PullRequestService pullRequestService;
+	private final SecurityService securityService;
+	private final UserService userService;
+	private JobTrigger jenkinsCI;
+		
     
+    public JenkinsJobScheduler(PullRequestService pullRequestService, UserService userService,SecurityService securityService, JobTrigger jenkinsCiIntergration) {
+		this.pullRequestService = pullRequestService;
+		this.userService = userService;
+		this.securityService = securityService;
+		this.jenkinsCI = jenkinsCiIntergration;
+	}
     @Override
-    public void execute(Map<String, Object> jobDataMap) {
-        PullRequestService pullrequestService = (PullRequestService) jobDataMap.get("pullRequestService");
-        Long pullRequestId = (Long) jobDataMap.get("pullrequest_id");
-        Integer repositoryId = (Integer) jobDataMap.get("repository_id");
-        String slug = (String) jobDataMap.get("slug");
-        JenkinsJobTrigger jenkinsCI = (JenkinsJobTrigger) jobDataMap.get("JobTrigger");
-        TriggerRequestEvent eventType = (TriggerRequestEvent) jobDataMap.get("TriggerRequestEvent");
-        String userName = (String) jobDataMap.get("UserName");
-        SecurityService securityService = (SecurityService) jobDataMap.get("SecurityService");
-        String jobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
-        
-        try {
-            securityService.doAsUser("background_trigger_jenkins_job", userName, new UserOperation(pullrequestService,jenkinsCI, pullRequestId, repositoryId, eventType));
-        } catch (Throwable e) {
-            log.error(String.format("Not able to execute the background job as user %s",userName, e));
-        } finally {
-            PluginSettingsHelper.resetScheduleTime(jobKey);
-        }
-        
-    }
-    
+	public JobRunnerResponse runJob(JobRunnerRequest request) {
+    	try {
+	    	 Map<String, Serializable> jobDataMap = request.getJobConfig().getParameters();
+	         Long pullRequestId = (Long) jobDataMap.get("pullrequest_id");
+	         Integer repositoryId = (Integer) jobDataMap.get("repository_id");
+	         String slug = (String) jobDataMap.get("slug");
+	         TriggerRequestEvent eventType = (TriggerRequestEvent) jobDataMap.get("TriggerRequestEvent");
+	         StashUser user = userService.getUserByName((String) jobDataMap.get("User"));
+	         String jobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
+	         
+	         try {
+	         	securityService.impersonating(user, "background_trigger_jenkins_job").call(new UserOperation(pullRequestService, jenkinsCI, pullRequestId, repositoryId, eventType));
+	         } catch (Throwable e) {
+	             log.error(String.format("Not able to execute the background job as user %s",user.getDisplayName(), e));
+	         } finally {
+	             PluginSettingsHelper.resetScheduleTime(jobKey);
+	         }
+    	} catch (Exception e) {
+    		log.error(String.format("Not able to run job with id %s",request.getJobId().toString()),e);
+    		return JobRunnerResponse.failed(e);
+    	}
+		return JobRunnerResponse.success();
+	}
+
     /**
      * Build a map of job data to be passed to the {@link JenkinsJobScheduler}
      * @param pr - The {@link PullRequest}
-     * @param jenkinsCiIntergration - The {@link JenkinsJobTrigger}
+     * @param event - The type of {@link TriggerRequestEvent}
      * @param pullRequestService - The {@link PullRequestService}
      * @param userManager - The {@link UserManager}
      * @param securityService - Then {@link SecurityService}
-     * @param event - The type of {@link TriggerRequestEvent}
      * @return A map with the job data
      */
-    static public Map<String, Object> buildJobDataMap(PullRequest pr, JobTrigger jenkinsCiIntergration, PullRequestService pullRequestService, UserManager userManager, SecurityService securityService, TriggerRequestEvent event) {
-        Map<String, Object> jobDataMap = new HashMap<String, Object>();
-        jobDataMap.put("JobTrigger", jenkinsCiIntergration);
-        jobDataMap.put("pullRequestService", pullRequestService);
+    static public Map<String, Serializable> buildJobDataMap(PullRequest pr, StashAuthenticationContext stashAuthenticationContext, TriggerRequestEvent event) {
+        Map<String, Serializable> jobDataMap = new HashMap<String, Serializable>();
         jobDataMap.put("pullrequest_id", pr.getId());
         jobDataMap.put("repository_id", pr.getFromRef().getRepository().getId());
         jobDataMap.put("slug", pr.getFromRef().getRepository().getSlug());
         jobDataMap.put("TriggerRequestEvent", event);
-        jobDataMap.put("UserName",userManager.getRemoteUser().getUsername());
-        jobDataMap.put("SecurityService",securityService);
+        jobDataMap.put("User",stashAuthenticationContext.getCurrentUser().getName());
         return jobDataMap;
     }
     
     private class UserOperation implements Operation<Object, Throwable> {
 
         private final TriggerRequestEvent eventType;
-        private final JenkinsJobTrigger jenkinsCI;
+        private final JobTrigger jenkinsCI;
         private final Long pullRequestId;
         private final Integer repositoryId;
         private final PullRequestService pullrequestService;
 
-        public UserOperation(PullRequestService pullrequestService, JenkinsJobTrigger jenkinsCI, Long pullRequestId, Integer repositoryId, TriggerRequestEvent eventType) {
+        public UserOperation(PullRequestService pullrequestService, JobTrigger jenkinsCI, Long pullRequestId, Integer repositoryId, TriggerRequestEvent eventType) {
             this.pullrequestService = pullrequestService;
             this.pullRequestId = pullRequestId;
             this.repositoryId = repositoryId;

@@ -1,6 +1,8 @@
 package com.harms.stash.plugin.jenkins.job.intergration;
 
+import java.io.Serializable;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -9,8 +11,12 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.event.api.EventListener;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.atlassian.sal.api.scheduling.PluginScheduler;
-import com.atlassian.sal.api.user.UserManager;
+import com.atlassian.scheduler.SchedulerService;
+import com.atlassian.scheduler.SchedulerServiceException;
+import com.atlassian.scheduler.config.JobConfig;
+import com.atlassian.scheduler.config.JobId;
+import com.atlassian.scheduler.config.RunMode;
+import com.atlassian.scheduler.config.Schedule;
 import com.atlassian.stash.event.pull.PullRequestDeclinedEvent;
 import com.atlassian.stash.event.pull.PullRequestEvent;
 import com.atlassian.stash.event.pull.PullRequestMergedEvent;
@@ -18,29 +24,21 @@ import com.atlassian.stash.event.pull.PullRequestOpenedEvent;
 import com.atlassian.stash.event.pull.PullRequestReopenedEvent;
 import com.atlassian.stash.event.pull.PullRequestRescopedEvent;
 import com.atlassian.stash.pull.PullRequest;
-import com.atlassian.stash.pull.PullRequestService;
 import com.atlassian.stash.repository.Repository;
-import com.atlassian.stash.user.SecurityService;
+import com.atlassian.stash.user.StashAuthenticationContext;
 import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
 
 public class StashEventListener {
-    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(StashEventListener.class);
     
-    private final JobTrigger jenkinsCI;
     private final PluginSettings settings;
-    private final PluginScheduler pluginScheduler;
-    private final UserManager userManager;
-    private final SecurityService securityService;
-    private final PullRequestService pullRequestService;
+    private final SchedulerService schedulerService;
+    private final StashAuthenticationContext stashAuthContext;
     
-    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, JobTrigger jenkinsCiIntergration, PluginScheduler pluginScheduler,UserManager userManager,SecurityService securityService, PullRequestService pullRequestService) {
-        this.pluginScheduler = pluginScheduler;
-        this.pullRequestService = pullRequestService;
+    public StashEventListener(PluginSettingsFactory pluginSettingsFactory, SchedulerService pluginScheduler,StashAuthenticationContext stashAuthContext) {
+        this.schedulerService = pluginScheduler;
         this.settings = pluginSettingsFactory.createGlobalSettings();
-        this.jenkinsCI = jenkinsCiIntergration;
-        this.userManager = userManager;
-        this.securityService = securityService;
+        this.stashAuthContext = stashAuthContext;
     }
     
     /**
@@ -63,6 +61,12 @@ public class StashEventListener {
     public void openPullRequest(PullRequestOpenedEvent pushEvent)
     {
         PullRequestData prd = new PullRequestData(pushEvent.getPullRequest());
+        
+        boolean isDisableAutomaticBuildByDefault = PluginSettingsHelper.isDisableAutomaticBuildByDefault(prd.slug,settings);
+        if (isDisableAutomaticBuildByDefault) {
+        	PluginSettingsHelper.enableAutomaticBuildFlag(prd.projectKey, prd.slug, prd.pullRequestId, settings);
+        	return;
+        }
         
         boolean triggerBuildOnCreate = PluginSettingsHelper.isTriggerBuildOnCreate(prd.slug,settings);
         if (triggerBuildOnCreate) {
@@ -89,8 +93,13 @@ public class StashEventListener {
     {
         PullRequestData prd = new PullRequestData(pushEvent.getPullRequest());
         
-        boolean automaticBuildDisabled = PluginSettingsHelper.isAutomaticBuildDisabled(prd.projectKey,prd.slug,prd.pullRequestId,settings);
+        boolean isDisableAutomaticBuildByDefault = PluginSettingsHelper.isDisableAutomaticBuildByDefault(prd.slug,settings);
+        if (isDisableAutomaticBuildByDefault) {
+        	PluginSettingsHelper.enableAutomaticBuildFlag(prd.projectKey, prd.slug, prd.pullRequestId, settings);
+        	return;
+        }
         
+        boolean automaticBuildDisabled = PluginSettingsHelper.isAutomaticBuildDisabled(prd.projectKey,prd.slug,prd.pullRequestId,settings);
         boolean triggerBuildOnReopen = PluginSettingsHelper.isTriggerBuildOnReopen(prd.slug,settings);
         if (triggerBuildOnReopen && !automaticBuildDisabled) {
             scheduleJobTrigger(pushEvent, prd);
@@ -103,10 +112,21 @@ public class StashEventListener {
      * @param prd
      */
     private void scheduleJobTrigger(PullRequestEvent pushEvent, PullRequestData prd) {
-        final Calendar scheduleJobTime = PluginSettingsHelper.getScheduleJobTime(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId));
+    	String scheduleJobKey = PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId);
+		final Calendar scheduleJobTime = PluginSettingsHelper.getScheduleJobTime(scheduleJobKey);
         if ((scheduleJobTime == null) || (System.currentTimeMillis() > scheduleJobTime.getTime().getTime())) {
-            Map<String, Object> jobData = JenkinsJobScheduler.buildJobDataMap(pushEvent.getPullRequest(),jenkinsCI,pullRequestService,userManager,securityService, getTriggerEventType(pushEvent));
-            pluginScheduler.scheduleJob(PluginSettingsHelper.getScheduleJobKey(prd.slug,prd.pullRequestId), JenkinsJobScheduler.class, jobData, PluginSettingsHelper.generateScheduleJobTime(prd.slug, settings, prd.pullRequestId), 0);
+            Map<String, Serializable> jobData = JenkinsJobScheduler.buildJobDataMap(pushEvent.getPullRequest(),stashAuthContext,getTriggerEventType(pushEvent));
+            Date jobTime = PluginSettingsHelper.generateScheduleJobTime(prd.slug, settings, prd.pullRequestId);
+            try {
+    			schedulerService.scheduleJob( 
+    					JobId.of(scheduleJobKey), 
+    			        JobConfig.forJobRunnerKey(JenkinsJobScheduler.jobRunnerKey) 
+    			                .withParameters(jobData)
+    			                .withRunMode(RunMode.RUN_ONCE_PER_CLUSTER) 
+    			                .withSchedule(Schedule.runOnce(jobTime)));
+    		} catch (SchedulerServiceException e) {
+    			log.error(String.format("Not able to schedule jenkins build with job id %s at %t",scheduleJobKey,jobTime));
+    		}
         }
     }
     
