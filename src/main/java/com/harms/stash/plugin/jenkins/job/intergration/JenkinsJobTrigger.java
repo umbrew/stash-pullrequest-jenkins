@@ -42,7 +42,7 @@ final public class JenkinsJobTrigger implements JobTrigger {
 	private static final long serialVersionUID = 8685235357537808631L;
 
 	private transient static final Logger log = LoggerFactory.getLogger(JenkinsJobTrigger.class);
-    
+
     private final PullRequestService pullRequestService;
     private final PluginSettings settings;
     private final WebResourceUrlProvider webResourceUrlProvider;
@@ -170,8 +170,11 @@ final public class JenkinsJobTrigger implements JobTrigger {
         String buildPullRequestUrlField = PluginSettingsHelper.getPullRequestUrlFieldName(slug, settings);
         String pullRequestUrl = buildPullRequestUrlField == null || buildPullRequestUrlField.isEmpty() ? "" : String.format("&%s=%s", buildPullRequestUrlField, pullRequestUrlValue);
 
-        String fromBranchUrl = fromBranchId == null || fromBranchId.isEmpty() ? "" : String.format("&%s=%s", "fromBranch", fromBranchId);
-        String toBranchUrl = toBranchId == null || toBranchId.isEmpty() ? "" : String.format("&%s=%s", "toBranch", toBranchId);
+        String fromBranchField = PluginSettingsHelper.getFromBranchField(slug, settings);
+        String fromBranchUrl = fromBranchField == null || fromBranchField.isEmpty() ? "" : String.format("&%s=%s", fromBranchField, fromBranchId);
+
+        String toBranchField = PluginSettingsHelper.getToBranchField(slug, settings);
+        String toBranchUrl = toBranchField == null || toBranchField.isEmpty() ? "" : String.format("&%s=%s", toBranchField, toBranchId);
 
         url = jenkinsBaseUrl + "buildWithParameters?" + refId + title + pullRequestUrl + fromBranchUrl + toBranchUrl;
         return url.trim();
@@ -209,7 +212,7 @@ final public class JenkinsJobTrigger implements JobTrigger {
         HttpParams httpParams = new BasicHttpParams();
         HttpConnectionParams.setConnectionTimeout(httpParams, 5000);
         HttpConnectionParams.setSoTimeout(httpParams, 7000);
-         
+
     	DefaultHttpClient client;
         client = new DefaultHttpClient(httpParams);
 
