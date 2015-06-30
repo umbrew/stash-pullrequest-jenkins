@@ -2,13 +2,13 @@
 
 /**
  * @param repository Repository object
- * @param jenkinsCIServerList List of Jenkins servers 
+ * @param jenkinsCIServerList List of Jenkins servers
  * @param jenkinsUserName Jenkins username
  * @param jenkinsPassword Jenkins password
  * @param buildRefField Build reference field
  * @param buildTitleField Build Title field
  * @param buildDelayField Build Delay field
- * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
+ * @param triggerBuildOnCreate True if a build should triggered when pull request is created
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
  * @param disableAutomaticBuildByDefault True if the "Disable automatic build" is enabled
@@ -26,7 +26,7 @@
 <body>
     <h3>Repository: {$repository.slug}</h3>
     <p>Welcome Jenkins pull request integration settings</p>
-<div id="aui-message-bar"></div>    
+<div id="aui-message-bar"></div>
 <form action="#" method="post" id="jenkinsconfigform" class="aui">
     <fieldset>
         <div class="field-group">
@@ -49,13 +49,13 @@
             <input class="checkbox" type="checkbox" id="triggerBuildOnReopen" name="triggerBuildOnReopen" {$triggerBuildOnReopen}">
             <div class="description">Enable for trigger a build when a pull request is reopen</div>
         </div>
-        
+
         <div class="field-group">
             <label for="jenkinsBaseUrl">Url</label>
-            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" > <button class="aui-button" type="button" id="addJenkinsCiServer">Add</button>            
+            <input class="text" type="text" id="jenkinsBaseUrl" name="jenkinsBaseUrl" title="URL" > <button class="aui-button" type="button" id="addJenkinsCiServer">Add</button>
             <div class="description">A Base Url to the Jenkins API</div>
         </div>
-        
+
          <div class="field-group">
             <label for="multiselect">Jenkins CI servers<span class="aui-icon icon-required"> required</span></label>
             <select class="multi-select" size="4" multiple="true" id="_jenkinsCIServerList" name="jenkinsCIServerList">
@@ -68,7 +68,7 @@
             <button class="aui-button" type="button" id="removeJenkinsCiServer" >Remove</button>
             <div class="description">A list of Jenkins CI servers for executing jobs.</div>
         </div>
-        
+
         <div class="field-group">
             <label for="jenkinsUserName">Username</label>
             <input class="text"" type="text" id="jenkinsUserName" name="jenkinsUserName" title="Username" value="{$jenkinsUserName}">
@@ -78,45 +78,57 @@
             <label for="jenkinsPassword" accesskey="p">Password</label>
             <input class="password" type="password" id="jenkinsPassword" name="jenkinsPassword" title="password" value="{$jenkinsPassword}">
         </div>
-        
+
         <div class="field-group">
             <label for="buildRefField">Build ref. field<span class="aui-icon icon-required"> required</span></label>
             <input class="text" type="text" id="buildRefField" name="buildRefField" title="Build ref. field" value="{$buildRefField}">
             <div class="description">The name of the build reference field for the jenkins job</div>
         </div>
-        
+
         <div class="field-group">
             <label for="buildTitleField">Build title field</label>
             <input class="text" type="text" id="buildTitleField" name="buildTitleField" title="Build title field" value="{$buildTitleField}">
             <div class="description">Build title field</div>
         </div>
-        
+
         <div class="field-group">
             <label for="buildTitleField">Pull-Request URL field</label>
             <input class="text" type="text" id="buildPullRequestUrlField" name="buildPullRequestUrlField" title="Pull-request URL field" value="{$buildPullRequestUrlField}">
             <div class="description">Pull-request URL field, add the name of the job parameter that should contain the URL of the pull-request</div>
         </div>
-        
+
          <div class="field-group">
             <label for="buildDelay">Delay build</label>
             <input class="text" type="text" id="buildDealyField" name="buildDelayField" title="Build delay field" value="{$buildDelayField}">
             <div class="description">Enter value in seconds for delaying the build when the pull-request is open,reopen, update</div>
         </div>
+
+         <div class="field-group">
+            <label for="fromBranchField">From Branch (label)</label>
+            <input class="text" type="text" id="fromBranchField" name="fromBranchField" title="From Branch (label)" value="{$fromBranchField}">
+            <div class="description">From Branch URL field, add the name of the job parameter that should contain the label of the from branch</div>
+        </div>
+
+         <div class="field-group">
+            <label for="toBranchField">To Branch (label)</label>
+            <input class="text" type="text" id="toBranchField" name="toBranchField" title="To Branch (label)" value="{$toBranchField}">
+            <div class="description">To Branch URL field, add the name of the job parameter that should contain the label of the to branch</div>
+        </div>
         <input class="text" type="hidden" id="repository.slug" name="repository.slug" value="{$repository.slug}">
     </fieldset>
 
-    
+
     <div class="buttons-container">
         <div class="buttons">
             <input class="button submit" type="submit" value="Save" id="d-save-btn1">
             <a class="cancel" href="#">Cancel</a>
         </div>
     </div>
-</form>  
+</form>
 	{literal}
 		<script>
 		  var editUrl = false;
-		  
+
 		  AJS.$(document).ready(function() {
 		         AJS.$("#addJenkinsCiServer").unbind("click").click(function(e) {
 		            var url =  AJS.$.trim(AJS.$("#jenkinsBaseUrl").val());
@@ -146,8 +158,8 @@
 			    return false;
 		  });
 		  AJS.$(document).ready(function() {
-			     AJS.$("#jenkinsconfigform").on('submit', function(e) { 
-					   
+			     AJS.$("#jenkinsconfigform").on('submit', function(e) {
+
 				       AJS.$("#_jenkinsCIServerList").find('option').each(function() {
 							AJS.$(this).attr('selected', 'selected');
 					   });
@@ -171,7 +183,7 @@
 					       title: "Mandatory Field",
 					       body: "No CI servers is added to the list \"Jenkins CI servers\" as required."
 					    });
-					   }  
+					   }
     			 });
 		  });
 		</script>

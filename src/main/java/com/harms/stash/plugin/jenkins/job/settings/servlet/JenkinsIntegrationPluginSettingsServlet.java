@@ -109,11 +109,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
 
         PluginSettingsHelper.setBuildReferenceField(slug, parameterMap.get("buildRefField")[0], ps);
         PluginSettingsHelper.setBuildDelay(slug, new Integer(parameterMap.get("buildDelayField")[0]), ps);
-        
+
         if (parameterMap.containsKey("disableAutomaticBuildByDefault")) {
             PluginSettingsHelper.enableDisableAutomaticBuildByDefault(slug, ps);
         }
-        
+
         if (parameterMap.containsKey("triggerBuildOnCreate")) {
             PluginSettingsHelper.enableTriggerOnCreate(slug, ps);
         }
@@ -137,12 +137,12 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
             PluginSettingsHelper.setBuildTitleField(slug, parameterMap.get("buildTitleField")[0], ps);
         }
 
-        if (!parameterMap.get("fromBranch")[0].isEmpty()) {
-            PluginSettingsHelper.setFromBranchField(slug, parameterMap.get("fromBranch")[0], ps);
+        if (!parameterMap.get("fromBranchField")[0].isEmpty()) {
+            PluginSettingsHelper.setFromBranchField(slug, parameterMap.get("fromBranchField")[0], ps);
         }
 
-        if (!parameterMap.get("toBranch")[0].isEmpty()) {
-            PluginSettingsHelper.setToBranchField(slug, parameterMap.get("toBranch")[0], ps);
+        if (!parameterMap.get("toBranchField")[0].isEmpty()) {
+            PluginSettingsHelper.setToBranchField(slug, parameterMap.get("toBranchField")[0], ps);
         }
 
         if (!parameterMap.get("buildPullRequestUrlField")[0].isEmpty()) {
@@ -243,12 +243,14 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
         context.put("buildRefField", PluginSettingsHelper.getBuildReferenceField(slug, pluginSettings));
         context.put("buildDelayField", PluginSettingsHelper.getBuildDelay(slug, pluginSettings).toString());
         context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
+        context.put("fromBranchField", PluginSettingsHelper.getFromBranchField(slug, pluginSettings));
+        context.put("toBranchField", PluginSettingsHelper.getToBranchField(slug, pluginSettings));
         context.put("buildPullRequestUrlField", PluginSettingsHelper.getPullRequestUrlFieldName(slug, pluginSettings));
-        
+
         if (PluginSettingsHelper.isDisableAutomaticBuildByDefault(slug, pluginSettings)){
             context.put("disableAutomaticBuildByDefault", "checked=\"checked\"");
-        } 
-        
+        }
+
         if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){
             context.put("triggerBuildOnCreate", "checked=\"checked\"");
         }
