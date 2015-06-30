@@ -2,7 +2,7 @@ package com.harms.stash.plugin.jenkins.job.intergration;
 
 
 /**
- * 
+ *
  * @author fharms
  *
  */
@@ -31,9 +31,11 @@ public interface JobTrigger {
      * @param retryCount - Number of current retries
      * @param baseUrl - the Jenkins CI base URL
      * @param projectId - The project id
+     * @param fromBranch - From Branch name, the origin of the pull request
+     * @param toBranch - To Branch name, the destination of the pull request
      */
     public void triggerBuild(Integer toRefRepositoryId, String latestChangeset, Long pullRequestId, String pullRequestTitle, String slug, TriggerRequestEvent eventType,
-            int retryCount, String baseUrl, String projectId);
-    
+            int retryCount, String baseUrl, String projectId, String fromBranch, String toBranch);
+
 
 }

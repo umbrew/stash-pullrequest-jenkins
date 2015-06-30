@@ -19,13 +19,13 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  * The triggerBuild code run inside a doAsUser to make sure it called with the correct
  * user and authorization, this is required otherwise it will give not authorized when
  * it try to update the pull-request
- * 
+ *
  * @author fharms
  *
  */
 public class JenkinsJobScheduler implements PluginJob {
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobScheduler.class);
-    
+
     @Override
     public void execute(Map<String, Object> jobDataMap) {
         PullRequestService pullrequestService = (PullRequestService) jobDataMap.get("pullRequestService");
@@ -37,7 +37,7 @@ public class JenkinsJobScheduler implements PluginJob {
         String userName = (String) jobDataMap.get("UserName");
         SecurityService securityService = (SecurityService) jobDataMap.get("SecurityService");
         String jobKey = PluginSettingsHelper.getScheduleJobKey(slug,pullRequestId);
-        
+
         try {
             securityService.doAsUser("background_trigger_jenkins_job", userName, new UserOperation(pullrequestService,jenkinsCI, pullRequestId, repositoryId, eventType));
         } catch (Throwable e) {
@@ -45,9 +45,9 @@ public class JenkinsJobScheduler implements PluginJob {
         } finally {
             PluginSettingsHelper.resetScheduleTime(jobKey);
         }
-        
+
     }
-    
+
     /**
      * Build a map of job data to be passed to the {@link JenkinsJobScheduler}
      * @param pr - The {@link PullRequest}
@@ -70,7 +70,7 @@ public class JenkinsJobScheduler implements PluginJob {
         jobDataMap.put("SecurityService",securityService);
         return jobDataMap;
     }
-    
+
     private class UserOperation implements Operation<Object, Throwable> {
 
         private final TriggerRequestEvent eventType;
@@ -95,16 +95,16 @@ public class JenkinsJobScheduler implements PluginJob {
                 String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
                 if (jenkinsCI.validateSettings(jenkinsBaseUrl,prd.slug)) {
                     log.debug(String.format("trigger build with parameter (%s, %s, %s, %s, %s, %s,%s",prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType,jenkinsBaseUrl));
-                    jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl, prd.projectKey);
+                    jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl, prd.projectKey, prd.fromBranchId, prd.toBranchId);
                 } else {
                     log.warn("Jenkins base URL & Build reference field is missing, please add the information in the pull-in settings");
                 }
             } else {
                 log.warn(String.format("No able to retrieve the pull-request with the key repository id (%s) and pull-request id (%s)", repositoryId,pullRequestId));
-            } 
+            }
             return null;
         }
-        
+
     }
 
 }
