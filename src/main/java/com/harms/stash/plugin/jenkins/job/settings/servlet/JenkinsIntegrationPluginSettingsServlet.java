@@ -27,6 +27,7 @@ import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_1;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_2;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_3;
 import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_5;
+import com.harms.stash.plugin.jenkins.job.settings.upgrade.steps.Upgrade_1_0_6;
 
 public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseServlet {
     private static final long serialVersionUID = -1645440333554544743L;
@@ -212,6 +213,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
         upgradeService.addUpgradeStep(new Upgrade_1_0_2(repository.getSlug()));
         upgradeService.addUpgradeStep(new Upgrade_1_0_3(repository.getSlug()));
         upgradeService.addUpgradeStep(new Upgrade_1_0_5(repository.getSlug()));
+        upgradeService.addUpgradeStep(new Upgrade_1_0_6(repository.getSlug()));
         upgradeService.process(); //if the upgrade is already executed this will just return
     }
 
