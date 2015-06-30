@@ -138,11 +138,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
             PluginSettingsHelper.setBuildTitleField(slug, parameterMap.get("buildTitleField")[0], ps);
         }
 
-        if (!parameterMap.get("fromBranchField")[0].isEmpty()) {
+        if (parameterMap.containsKey("fromBranchField")) {
             PluginSettingsHelper.setFromBranchField(slug, parameterMap.get("fromBranchField")[0], ps);
         }
 
-        if (!parameterMap.get("toBranchField")[0].isEmpty()) {
+        if (parameterMap.containsKey("toBranchField")) {
             PluginSettingsHelper.setToBranchField(slug, parameterMap.get("toBranchField")[0], ps);
         }
 
