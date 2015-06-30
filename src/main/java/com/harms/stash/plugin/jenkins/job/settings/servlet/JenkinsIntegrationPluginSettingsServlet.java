@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.sal.api.auth.LoginUriProvider;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.soy.renderer.SoyException;
 import com.atlassian.soy.renderer.SoyTemplateRenderer;
 import com.atlassian.stash.repository.Repository;
 import com.atlassian.stash.repository.RepositoryService;
+import com.atlassian.stash.user.StashAuthenticationContext;
 import com.google.common.collect.Maps;
 import com.harms.stash.plugin.jenkins.job.settings.DecryptException;
 import com.harms.stash.plugin.jenkins.job.settings.EncryptException;
@@ -37,8 +37,8 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
     private final PluginSettingsFactory pluginSettingsFactory;
     private final UpgradeService upgradeService;
 
-    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, UserManager userManager, LoginUriProvider loginUriProvider) {
-        super(loginUriProvider, userManager);
+    public JenkinsIntegrationPluginSettingsServlet(SoyTemplateRenderer soyTemplateRenderer, RepositoryService repositoryService, PluginSettingsFactory pluginSettingsFactory, StashAuthenticationContext stashAuthContext, LoginUriProvider loginUriProvider) {
+        super(loginUriProvider, stashAuthContext);
         this.soyTemplateRenderer = soyTemplateRenderer;
         this.repositoryService = repositoryService;
         this.pluginSettingsFactory = pluginSettingsFactory;
@@ -109,7 +109,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
 
         PluginSettingsHelper.setBuildReferenceField(slug, parameterMap.get("buildRefField")[0], ps);
         PluginSettingsHelper.setBuildDelay(slug, new Integer(parameterMap.get("buildDelayField")[0]), ps);
-
+        
+        if (parameterMap.containsKey("disableAutomaticBuildByDefault")) {
+            PluginSettingsHelper.enableDisableAutomaticBuildByDefault(slug, ps);
+        }
+        
         if (parameterMap.containsKey("triggerBuildOnCreate")) {
             PluginSettingsHelper.enableTriggerOnCreate(slug, ps);
         }
@@ -240,7 +244,11 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
         context.put("buildDelayField", PluginSettingsHelper.getBuildDelay(slug, pluginSettings).toString());
         context.put("buildTitleField", PluginSettingsHelper.getBuildTitleField(slug, pluginSettings));
         context.put("buildPullRequestUrlField", PluginSettingsHelper.getPullRequestUrlFieldName(slug, pluginSettings));
-
+        
+        if (PluginSettingsHelper.isDisableAutomaticBuildByDefault(slug, pluginSettings)){
+            context.put("disableAutomaticBuildByDefault", "checked=\"checked\"");
+        } 
+        
         if (PluginSettingsHelper.isTriggerBuildOnCreate(slug, pluginSettings)){
             context.put("triggerBuildOnCreate", "checked=\"checked\"");
         }
@@ -263,6 +271,7 @@ public class JenkinsIntegrationPluginSettingsServlet extends JenkinsStashBaseSer
         context.put("buildTitleField", "");
         context.put("jenkinsBaseUrl", "");
         context.put("jenkinsCIServerList",null);
+        context.put("disableAutomaticBuildByDefault", "");
         context.put("triggerBuildOnCreate", "");
         context.put("triggerBuildOnUpdate", "");
         context.put("triggerBuildOnReopen", "");

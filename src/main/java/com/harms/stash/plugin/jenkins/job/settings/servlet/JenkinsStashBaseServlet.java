@@ -10,17 +10,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.atlassian.sal.api.auth.LoginUriProvider;
-import com.atlassian.sal.api.user.UserManager;
-import com.atlassian.sal.api.user.UserProfile;
+import com.atlassian.stash.user.StashAuthenticationContext;
 
 public class JenkinsStashBaseServlet extends HttpServlet {
     private static final long serialVersionUID = 49L;
     protected final LoginUriProvider loginUriProvider;
-    protected final UserManager userManager;
+    protected final StashAuthenticationContext stashAuthContext;
     
-    public JenkinsStashBaseServlet(LoginUriProvider loginUriProvider, UserManager userManager) {
+    public JenkinsStashBaseServlet(LoginUriProvider loginUriProvider, StashAuthenticationContext stashAuthContext) {
         this.loginUriProvider = loginUriProvider;
-        this.userManager = userManager;
+        this.stashAuthContext = stashAuthContext;
     }
     
     protected void redirectToLogin(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
@@ -48,8 +47,7 @@ public class JenkinsStashBaseServlet extends HttpServlet {
     
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        UserProfile user = userManager.getRemoteUser(req);
-        if (user == null) {
+        if (!stashAuthContext.isAuthenticated()) {
             redirectToLogin(req, resp);
             return;
         }

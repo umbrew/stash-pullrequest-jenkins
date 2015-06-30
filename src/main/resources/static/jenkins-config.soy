@@ -11,6 +11,7 @@
  * @param triggerBuildOnCreate True if a build should triggered when pull request is created  
  * @param triggerBuildOnUpdate True if a build should triggered when pull request is updated
  * @param triggerBuildOnReopen True if a build should triggered when pull request is reopen
+ * @param disableAutomaticBuildByDefault True if the "Disable automatic build" is enabled
  * @param buildPullRequestUrlField Pull-request URL field
  */
 {template .repositorySettings}
@@ -28,6 +29,11 @@
 <div id="aui-message-bar"></div>    
 <form action="#" method="post" id="jenkinsconfigform" class="aui">
     <fieldset>
+        <div class="field-group">
+            <label for="disableAutomaticBuildByDefault">Enable 'Disable automatic build'</label>
+            <input class="checkbox" type="checkbox" id="disableAutomaticBuildByDefault" name="disableAutomaticBuildByDefault" {$disableAutomaticBuildByDefault}">
+            <div class="description">Enable by default 'Disable automatic build'</div>
+        </div>
         <div class="field-group">
             <label for="triggerBuildOnCreate">Trigger on new pull-request</label>
             <input class="checkbox" type="checkbox" id="triggerBuildOnCreate" name="triggerBuildOnCreate" {$triggerBuildOnCreate}">
