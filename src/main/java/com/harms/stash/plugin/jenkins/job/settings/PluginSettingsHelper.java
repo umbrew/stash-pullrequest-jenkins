@@ -19,10 +19,12 @@ import com.harms.stash.plugin.jenkins.job.settings.servlet.ManualTriggerBuildSer
 
 public class PluginSettingsHelper {
     private static final Logger log = LoggerFactory.getLogger(ManualTriggerBuildServlet.class);
-    
+
     private static final String CHECKED = "checked";
     public static final String PLUGIN_STORAGE_KEY = "stash.plugin.jenkins.settingsui";
     public static final String BUILD_TITLE_FIELD = PLUGIN_STORAGE_KEY + ".buildTitleField";
+    public static final String FROM_BRANCH_FIELD = PLUGIN_STORAGE_KEY + ".fromBranchField";
+    public static final String TO_BRANCH_FIELD = PLUGIN_STORAGE_KEY + ".toBranchField";
     public static final String BUILD_REF_FIELD = PLUGIN_STORAGE_KEY + ".buildRefField";
     public static final String JENKINS_PASSWORD = PLUGIN_STORAGE_KEY + ".jenkinsPassword";
     public static final String JENKINS_USERNAME = PLUGIN_STORAGE_KEY + ".jenkinsUserName";
@@ -34,15 +36,15 @@ public class PluginSettingsHelper {
     public static final String TRIGGER_BUILD_ON_REOPEN = PLUGIN_STORAGE_KEY + ".triggerBuildOnReopen";
     public static final String DISABLE_AUTOMATIC_BUILD_BY_DEFAULT = PLUGIN_STORAGE_KEY + ".disableAutomaticBuildByDefault";
     private static final String JENKINS_PR_URL_FIELD = PLUGIN_STORAGE_KEY + ".jenkinsPRUrl";
-    
+
     private static final String BUILD_DELAY_FIELD = PLUGIN_STORAGE_KEY + ".buildDelayField";
-    
+
     public static final String PLUGIN_VERISON = PLUGIN_STORAGE_KEY + ".pluginVersion";
-    
+
     private static Map<String, Calendar> jobScheduleDate = new ConcurrentHashMap<String, Calendar>();
-    
+
     /**
-     * Return the pull-request settings key. 
+     * Return the pull-request settings key.
      * @param repositoryKey - The repository key
      * @param slug - The slug of the repository to search for
      * @param pullRequestId - The id of the pull-request
@@ -51,11 +53,11 @@ public class PluginSettingsHelper {
     static private String getDisableAutomaticBuildSettingsKey(String projectKey, String slug, Long pullRequestId) {
         return "stash.plugin.jenkins.settingsui." + projectKey + "/" + slug+ "/" +pullRequestId;
     }
-    
+
     static public String getPluginKey(String baseKey, String slug) {
         return baseKey+slug;
     }
-    
+
     /**
      * Clear the automatic build flag for the specified repository, slug and pull request
      * @param projectKey - the id of the repository
@@ -66,7 +68,7 @@ public class PluginSettingsHelper {
     static public void clearAutomaticBuildFlag(String projectKey, String slug, Long pullRequestId, PluginSettings settings) {
         settings.remove(getDisableAutomaticBuildSettingsKey(projectKey,slug, pullRequestId));
     }
-    
+
     /**
      * Set the automatic build flag in the settings for the specified repository, slug and pull request
      * @param projectKey - the id of the repository
@@ -77,7 +79,7 @@ public class PluginSettingsHelper {
     public static void enableAutomaticBuildFlag(String projectKey, String slug, Long pullRequestId, PluginSettings settings) {
         settings.put(getDisableAutomaticBuildSettingsKey(projectKey,slug, pullRequestId), CHECKED);
     }
-    
+
     /**
      * Test if the automatic build is disable for the pull-request
      * @param projectKey - the id of the repository
@@ -89,7 +91,7 @@ public class PluginSettingsHelper {
     public static boolean isAutomaticBuildDisabled(String projectKey, String slug, Long pullRequestId,PluginSettings settings) {
         return (CHECKED.equals(settings.get(PluginSettingsHelper.getDisableAutomaticBuildSettingsKey(projectKey,slug,pullRequestId))));
     }
-    
+
     /**
      * Get the decrypted password from the {@link PluginSettings}
      * @param slug - The slug of the repository to search for
@@ -113,12 +115,12 @@ public class PluginSettingsHelper {
             throw new DecryptException(e);
         }
     }
-    
+
     /**
      * Encrypt and store the password for the plug-in. This is not bullet proof why of storing
      * password, but this at least make sure the it's not stored in free text.
      * @param slug - The slug of the repository to search for
-     * @param password - The password to store 
+     * @param password - The password to store
      * @param settings - The plug-in settings
      * @throws EncryptException
      */
@@ -135,7 +137,7 @@ public class PluginSettingsHelper {
             throw new EncryptException(e);
         }
     }
-    
+
     /**
      * Get the decrypted usename from the {@link PluginSettings}
      * @param slug - The slug of the repository to search for
@@ -159,12 +161,12 @@ public class PluginSettingsHelper {
             throw new DecryptException(e);
         }
     }
-    
+
     /**
      * Encrypt and store the username for the plug-in.This is not bullet proof why of storing
      * username, but this at least make sure it's not stored in free text.
      * @param slug - The slug of the repository to search for
-     * @param username - The username to store 
+     * @param username - The username to store
      * @param settings - The plug-in settings
      * @throws EncryptException
      */
@@ -202,7 +204,7 @@ public class PluginSettingsHelper {
     public static boolean isTriggerBuildOnCreate(String slug, PluginSettings settings) {
         return (CHECKED.equals(settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_CREATE,slug))));
     }
-    
+
     /**
      * Return true if the trigger on reopen build flag is enabled for the plug-in
      * @param slug
@@ -212,7 +214,7 @@ public class PluginSettingsHelper {
     public static boolean isTriggerBuildOnReopen(String slug, PluginSettings settings) {
         return (CHECKED.equals(settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN,slug))));
     }
-    
+
     /**
      * Return true if the trigger on update flag is enabled for the plug-in
      * @param slug
@@ -222,7 +224,7 @@ public class PluginSettingsHelper {
     public static boolean isTriggerBuildOnUpdate(String slug, PluginSettings settings) {
         return (CHECKED.equals(settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_UPDATE,slug))));
     }
-    
+
     /**
      * Return the name of the build ref field on the settings. This point to a parameter on the Jenkins Job
      * @param slug
@@ -233,7 +235,7 @@ public class PluginSettingsHelper {
         String buildRefField = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
         return buildRefField == null  ? "" : buildRefField;
     }
-    
+
     /**
      * Set the name of the build ref field on the settings. This point to a parameter on the Jenkins Job
      * @param slug
@@ -243,7 +245,7 @@ public class PluginSettingsHelper {
     public static void setBuildReferenceField(String slug, String buildRef, PluginSettings settings) {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug), buildRef);
     }
-    
+
     /**
      * Return the build trigger delay from on the settings. This point to a parameter on the Jenkins Job
      * if no previous value is specified it will default to 300 seconds
@@ -258,7 +260,7 @@ public class PluginSettingsHelper {
         }
         return buildDelayField;
     }
-    
+
     /**
      * Set the build trigger delay on the settings. This point to a parameter on the Jenkins Job
      * @param slug
@@ -268,20 +270,20 @@ public class PluginSettingsHelper {
     public static void setBuildDelay(String slug, Integer buildDelay, PluginSettings settings) {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug), buildDelay.toString());
     }
-    
+
     /**
      * Set the name of the build titel field on the settings. This point to a parameter on the Jenkins Job
      * @param slug
      * @param buildTitle
      * @param settings
      */
-    public static void setBuildTitleField(String slug, String buildRef, PluginSettings settings) {
-        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug), buildRef);
+    public static void setBuildTitleField(String slug, String buildTitle, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug), buildTitle);
     }
-    
-    
+
+
     /**
-     * Return the name of the title field from the settings 
+     * Return the name of the title field from the settings
      * @param slug
      * @param settings
      * @return
@@ -290,7 +292,49 @@ public class PluginSettingsHelper {
        String buildTitleField = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug));
        return buildTitleField == null ? "" : buildTitleField;
     }
-    
+
+    /**
+     * Set the name of the from branch field on the settings. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param fromBranch
+     * @param settings
+     */
+    public static void setFromBranchField(String slug, String fromBranch, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.FROM_BRANCH_FIELD,slug), fromBranch);
+    }
+
+    /**
+     * Return the name of the from branch from the settings
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getFromBranchField(String slug, PluginSettings settings) {
+       String fromBranchField = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.FROM_BRANCH_FIELD,slug));
+       return fromBranchField == null ? "" : fromBranchField;
+    }
+
+    /**
+     * Set the name of the to branch field on the settings. This point to a parameter on the Jenkins Job
+     * @param slug
+     * @param toBranch
+     * @param settings
+     */
+    public static void setToBranchField(String slug, String toBranch, PluginSettings settings) {
+        settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TO_BRANCH_FIELD,slug), toBranch);
+    }
+
+    /**
+     * Return the name of the to branch from the settings
+     * @param slug
+     * @param settings
+     * @return
+     */
+    public static String getToBranchField(String slug, PluginSettings settings) {
+       String toBranchField = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TO_BRANCH_FIELD,slug));
+       return toBranchField == null ? "" : toBranchField;
+    }
+
     /**
      * Returne the list of Jenkins CI servers from the settings
      * @param slug
@@ -308,7 +352,7 @@ public class PluginSettingsHelper {
         }
         return serverList;
     }
-    
+
     /**
      * Return the last used Jenkins CI server
      * @param slug
@@ -318,9 +362,9 @@ public class PluginSettingsHelper {
     public static String getLastJenkinsCIServer(String  slug, PluginSettings settings) {
         return (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_LAST_CI_SERVER,slug));
     }
-    
+
     /**
-     * Store the last used Jenkins CI server in settings storage 
+     * Store the last used Jenkins CI server in settings storage
      * @param slug
      * @param lastCiServer
      * @param settings
@@ -328,7 +372,7 @@ public class PluginSettingsHelper {
     public static void setLastJenkinsCIServer(String slug, String lastCiServer, PluginSettings settings) {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_LAST_CI_SERVER,slug), lastCiServer);
     }
-    
+
     /**
      * Enable the disable build by default
      * @param slug
@@ -364,7 +408,7 @@ public class PluginSettingsHelper {
     public static void enableTriggerOnReopen(String slug, PluginSettings settings) {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TRIGGER_BUILD_ON_REOPEN, slug), CHECKED);
     }
-    
+
     /**
      * Set the list of Jenkins server on the settings.
      * @param jenkinsCIServerList - A list of jenkins servers
@@ -376,7 +420,7 @@ public class PluginSettingsHelper {
         settings.put(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug), concatString.substring(1, concatString.length()-1));
 
     }
-    
+
     /**
      * Reset the Plug-in settings
      * @param slug - Repository Key
@@ -386,6 +430,8 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_USERNAME,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PASSWORD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_TITLE_FIELD,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.FROM_BRANCH_FIELD,slug));
+        pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.TO_BRANCH_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_REF_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.BUILD_DELAY_FIELD,slug));
@@ -396,7 +442,7 @@ public class PluginSettingsHelper {
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_CI_SERVER_LIST,slug));
         pluginSettings.remove(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_LAST_CI_SERVER,slug));
     }
-    
+
     /**
      * Generate schedule time for when the build should be triggered
      * @param slug
@@ -407,7 +453,7 @@ public class PluginSettingsHelper {
     public static Date generateScheduleJobTime(String slug, PluginSettings settings, Long pullRequestId) {
        return setScheduleJobTime(slug, settings, pullRequestId, getBuildDelay(slug, settings));
     }
-    
+
     /**
      * Return a schedule date time based on the specified delay in seconds
      * @param slug
@@ -421,16 +467,16 @@ public class PluginSettingsHelper {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, delay);
         jobScheduleDate.put(jobKey, calendar);
-        
+
         if (log.isDebugEnabled()) {
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
             log.debug(String.format("Calculated execution time %s for job %s",sdf.format(calendar.getTime()),jobKey));
         }
-        return calendar.getTime(); 
+        return calendar.getTime();
     }
-    
+
     /**
-     * Return the registered job time for the specified job 
+     * Return the registered job time for the specified job
      * @param jobId
      * @return
      */
@@ -446,7 +492,7 @@ public class PluginSettingsHelper {
     public static String getScheduleJobKey(String slug, Long pullRequestId) {
        return slug+"."+pullRequestId;
     }
-    
+
     /**
      * Remove the last job schedule time
      * @param jobKey
@@ -455,7 +501,7 @@ public class PluginSettingsHelper {
         log.debug("Remove registered job trigger time with key "+jobKey);
         jobScheduleDate.remove(jobKey);
     }
-    
+
     /**
      * Return the build pull-request field name. This point to a parameter on the Jenkins Job
      * @param slug
@@ -465,12 +511,12 @@ public class PluginSettingsHelper {
     public static String getPullRequestUrlFieldName(String slug, PluginSettings settings) {
         String prUrl = "";
         if (settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug)) != null) {
-            prUrl = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug)); 
+            prUrl = (String) settings.get(PluginSettingsHelper.getPluginKey(PluginSettingsHelper.JENKINS_PR_URL_FIELD,slug));
         }
-        
+
         return prUrl;
     }
-    
+
     /**
      * Set the build pull-request field name. This point to a parameter on the Jenkins Job
      * @param slug

@@ -25,13 +25,14 @@ import com.harms.stash.plugin.jenkins.job.settings.PluginSettingsHelper;
  * The triggerBuild code run inside a doAsUser to make sure it called with the correct
  * user and authorization, this is required otherwise it will give not authorized when
  * it try to update the pull-request
- * 
+ *
  * @author fharms
  *
  */
 public class JenkinsJobScheduler implements JobRunner {
 	public static final  JobRunnerKey jobRunnerKey = JobRunnerKey.of("com.harms.stash.plugin.jenkins.job.intergration:jenkins-job-intergration:ScheduleBuild");
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobScheduler.class);
+
 	private final PullRequestService pullRequestService;
 	private final SecurityService securityService;
 	private final UserService userService;
@@ -87,7 +88,7 @@ public class JenkinsJobScheduler implements JobRunner {
         jobDataMap.put("User",stashAuthenticationContext.getCurrentUser().getName());
         return jobDataMap;
     }
-    
+
     private class UserOperation implements Operation<Object, Throwable> {
 
         private final TriggerRequestEvent eventType;
@@ -112,16 +113,16 @@ public class JenkinsJobScheduler implements JobRunner {
                 String jenkinsBaseUrl = jenkinsCI.nextCIServer(prd.slug);
                 if (jenkinsCI.validateSettings(jenkinsBaseUrl,prd.slug)) {
                     log.debug(String.format("trigger build with parameter (%s, %s, %s, %s, %s, %s,%s",prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType,jenkinsBaseUrl));
-                    jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl, prd.projectKey);
+                    jenkinsCI.triggerBuild(prd.repositoryId, prd.latestChanges, prd.pullRequestId,prd.title,prd.slug,eventType, 0,jenkinsBaseUrl, prd.projectKey, prd.fromBranchId, prd.toBranchId);
                 } else {
                     log.warn("Jenkins base URL & Build reference field is missing, please add the information in the pull-in settings");
                 }
             } else {
                 log.warn(String.format("No able to retrieve the pull-request with the key repository id (%s) and pull-request id (%s)", repositoryId,pullRequestId));
-            } 
+            }
             return null;
         }
-        
+
     }
 
 }
